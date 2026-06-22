@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth.jsx'
-import styles from './Login.module.css'
+import s from './Login.module.css'
 
 export default function Login() {
   const { signInWithGoogle, signInWithMagicLink } = useAuth()
@@ -13,53 +13,36 @@ export default function Login() {
     e.preventDefault()
     if (!email.trim()) return
     setLoading(true)
-    try {
-      await signInWithMagicLink(email)
-      setSent(true)
-    } catch(err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
+    try { await signInWithMagicLink(email); setSent(true) }
+    catch(err) { console.error(err) }
+    finally { setLoading(false) }
   }
 
-  if (sent) {
-    return (
-      <div className={styles.wrap}>
-        <div className={styles.content}>
-          <div className={styles.logo}>
-            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-              <rect width="64" height="64" rx="20" fill="#6B63FF"/>
-              <text x="50%" y="54%" dominantBaseline="middle" textAnchor="middle"
-                fontSize="34" fill="white" fontFamily="Vazirmatn,sans-serif" fontWeight="700">خ</text>
-            </svg>
-          </div>
-          <h2 className={styles.title}>ایمیل رو چک کن</h2>
-          <p className={styles.sub} style={{textAlign:'center', lineHeight:'1.8'}}>
-            یه لینک ورود به<br/>
-            <strong style={{color:'var(--text-primary)'}}>{email}</strong><br/>
-            فرستادیم. روش کلیک کن.
-          </p>
-        </div>
+  if (sent) return (
+    <div className={s.wrap}>
+      <div className={s.content}>
+        <div className={s.logo}>خ</div>
+        <h2 className={s.title}>ایمیل رو چک کن</h2>
+        <p className={s.sub} style={{textAlign:'center'}}>
+          لینک ورود به<br/>
+          <strong style={{color:'var(--text)'}}>{email}</strong><br/>
+          فرستادیم
+        </p>
       </div>
-    )
-  }
+    </div>
+  )
 
   return (
-    <div className={styles.wrap}>
-      <div className={styles.content}>
-        <div className={styles.logo}>
-          <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-            <rect width="64" height="64" rx="20" fill="#6B63FF"/>
-            <text x="50%" y="54%" dominantBaseline="middle" textAnchor="middle"
-              fontSize="34" fill="white" fontFamily="Vazirmatn,sans-serif" fontWeight="700">خ</text>
-          </svg>
-        </div>
-        <h1 className={styles.title}>خرج</h1>
-        <p className={styles.sub}>دفتر هزینه مشترک خانواده</p>
+    <div className={s.wrap}>
+      <div className={s.glow}/>
+      <div className={s.content}>
 
-        <div className={styles.btnGroup}>
-          <button className={styles.googleBtn} onClick={signInWithGoogle}>
+        <div className={s.logo}>خ</div>
+        <h1 className={s.title}>خرج</h1>
+        <p className={s.sub}>دفتر هزینه مشترک خانواده</p>
+
+        <div className={s.btnGroup}>
+          <button className={s.googleBtn} onClick={signInWithGoogle}>
             <svg width="20" height="20" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -69,33 +52,30 @@ export default function Login() {
             ورود با Google
           </button>
 
-          <div className={styles.divider}>
-            <span>یا</span>
-          </div>
+          <div className={s.divider}><span>یا</span></div>
 
           {!showEmail ? (
-            <button className={styles.emailToggleBtn} onClick={() => setShowEmail(true)}>
+            <button className={s.emailBtn} onClick={()=>setShowEmail(true)}>
               ورود با ایمیل (Magic Link)
             </button>
           ) : (
-            <form onSubmit={handleMagicLink} className={styles.emailForm}>
+            <form onSubmit={handleMagicLink} className={s.emailForm}>
               <input
                 type="email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={e=>setEmail(e.target.value)}
                 placeholder="ایمیلت رو وارد کن"
                 autoFocus
+                style={{direction:'ltr', textAlign:'center'}}
               />
-              <button type="submit" className={styles.magicBtn} disabled={loading}>
+              <button type="submit" className={s.magicBtn} disabled={loading}>
                 {loading ? '...' : 'ارسال لینک ورود'}
               </button>
             </form>
           )}
         </div>
 
-        <p className={styles.hint}>
-          با ورود، می‌تونی یه دفتر مشترک با همسرت داشته باشی
-        </p>
+        <p className={s.hint}>با ورود، دفتر مشترک خانواده‌ات رو می‌سازی</p>
       </div>
     </div>
   )
