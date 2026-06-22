@@ -1,0 +1,79 @@
+/* src/pages/Login.module.css */
+.wrap {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(107,99,255,0.15), transparent);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  max-width: 340px;
+}
+
+.logo { margin-bottom: 0.5rem; }
+
+.title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.sub {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+  margin-bottom: 1rem;
+}
+
+.appleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 24px;
+  border-radius: var(--radius-lg);
+  background: var(--text-primary);
+  color: #000;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: var(--font);
+  transition: opacity 0.15s;
+}
+.appleBtn:hover { opacity: 0.88; }
+.appleBtn:active { opacity: 0.75; transform: scale(0.97); }
+
+.hint {
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+  text-align: center;
+  line-height: 1.6;
+  margin-top: 0.5rem;
+}
+
+.googleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 24px;
+  border-radius: var(--radius-lg);
+  background: #fff;
+  color: #1a1a1a;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: var(--font);
+  transition: opacity 0.15s;
+  border: none;
+}
+.googleBtn:hover { opacity: 0.88; }
+.googleBtn:active { opacity: 0.75; transform: scale(0.97); }

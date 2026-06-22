@@ -1,0 +1,184 @@
+/* src/pages/Dashboard.module.css */
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  padding-bottom: calc(80px + var(--safe-bottom));
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.planName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.iconBtn {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--bg-card);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-secondary);
+  transition: color 0.15s, background 0.15s;
+}
+.iconBtn:hover { color: var(--text-primary); background: var(--bg-elevated); }
+
+/* Month Nav */
+.monthNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px 10px;
+}
+.monthInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.monthName {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.yearLabel {
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+}
+.navBtn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-secondary);
+}
+.navBtn:disabled { opacity: 0.25; cursor: not-allowed; transform: none; }
+.navBtn:not(:disabled):hover { color: var(--text-primary); }
+
+/* Summary */
+.summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 12px 20px;
+}
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border: 1px solid var(--border);
+}
+.balanceCard {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.cardLabel {
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+.cardValue {
+  font-size: 1rem;
+  font-weight: 600;
+}
+.green { color: var(--green); }
+.red { color: var(--red); }
+
+/* List */
+.listWrap { flex: 1; padding: 4px 20px; }
+.list { display: flex; flex-direction: column; gap: 2px; }
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 200px;
+  color: var(--text-tertiary);
+  font-size: 0.88rem;
+}
+.emptyIcon { font-size: 2rem; opacity: 0.4; }
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  transition: background 0.1s;
+}
+.row:hover { background: var(--bg-card); }
+.rowRight { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.rowLeft { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.catBadge {
+  font-size: 0.72rem;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.rowMeta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rowDesc {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rowSub { font-size: 0.75rem; color: var(--text-tertiary); }
+
+.amount {
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.unit { font-size: 0.7rem; font-weight: 400; margin-right: 2px; opacity: 0.7; }
+
+.delBtn {
+  width: 26px; height: 26px;
+  border-radius: 8px;
+  background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-tertiary);
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+}
+.row:hover .delBtn { opacity: 1; }
+.delBtn:hover { background: var(--red-soft); color: var(--red); }
+
+/* FAB */
+.fab {
+  position: fixed;
+  bottom: calc(24px + var(--safe-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 30px rgba(107,99,255,0.4);
+  z-index: 20;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.fab:hover { transform: translateX(-50%) scale(1.06); box-shadow: 0 12px 40px rgba(107,99,255,0.5); }
+.fab:active { transform: translateX(-50%) scale(0.94); }
