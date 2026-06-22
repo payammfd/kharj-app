@@ -77,3 +77,49 @@
 }
 .googleBtn:hover { opacity: 0.88; }
 .googleBtn:active { opacity: 0.75; transform: scale(0.97); }
+
+.btnGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-tertiary);
+  font-size: 0.8rem;
+}
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.emailToggleBtn {
+  width: 100%;
+  padding: 13px;
+  border-radius: var(--radius-lg);
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-family: var(--font);
+}
+.emailToggleBtn:hover { color: var(--text-primary); border-color: var(--accent); }
+
+.emailForm { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.magicBtn {
+  padding: 13px;
+  border-radius: var(--radius-lg);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: var(--font);
+  border: 1px solid rgba(107,99,255,0.3);
+}
+.magicBtn:hover { background: var(--accent); color: #fff; }

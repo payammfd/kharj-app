@@ -21,7 +21,15 @@ export function AuthProvider({ children }) {
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin }
+      options: { redirectTo: window.location.origin + window.location.pathname }
+    })
+    if (error) throw error
+  }
+
+  const signInWithMagicLink = async (email) => {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.origin + window.location.pathname }
     })
     if (error) throw error
   }
@@ -29,7 +37,7 @@ export function AuthProvider({ children }) {
   const signOut = () => supabase.auth.signOut()
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithMagicLink, signOut }}>
       {children}
     </AuthContext.Provider>
   )
