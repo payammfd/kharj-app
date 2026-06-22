@@ -12,6 +12,22 @@ import ProfilePage from './pages/ProfilePage'
 import BottomNav from './components/BottomNav'
 import AddTransactionSheet from './components/AddTransactionSheet'
 
+const Spinner = () => (
+  <div style={{
+    minHeight: '100dvh', display: 'flex', alignItems: 'center',
+    justifyContent: 'center', background: 'var(--bg)',
+    flexDirection: 'column', gap: '16px'
+  }}>
+    <div style={{
+      width: 56, height: 56, borderRadius: 18,
+      background: 'linear-gradient(135deg,#7B6EFF,#4FACFE)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: '1.8rem', fontWeight: 700
+    }}>خ</div>
+    <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: '1.2rem' }}>⋯</div>
+  </div>
+)
+
 function AppInner() {
   const { user, loading: authLoading } = useAuth()
   const { plan, cards, loading: planLoading } = usePlan()
@@ -19,23 +35,32 @@ function AppInner() {
   const [showAddTx, setShowAddTx] = useState(false)
   const [today] = useState(() => todayJalali())
 
-  if (authLoading || planLoading) return (
-    <div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bg)',color:'rgba(255,255,255,0.3)',fontSize:'1.5rem'}}>⋯</div>
-  )
+  // Show spinner while auth is loading
+  if (authLoading) return <Spinner/>
+
+  // Not logged in
   if (!user) return <Login/>
+
+  // Auth done but plan still loading - show spinner briefly
+  if (planLoading) return <Spinner/>
+
+  // Logged in but no plan
   if (!plan) return <Setup/>
 
   return (
     <>
-      {tab==='home'    && <Dashboard onNavigate={setTab}/>}
-      {tab==='cards'   && <Cards/>}
-      {tab==='stats'   && <Stats/>}
-      {tab==='plan'    && <PlanPage/>}
-      {tab==='profile' && <ProfilePage/>}
-      <BottomNav active={tab} onNavigate={setTab} onAddTx={()=>setShowAddTx(true)}/>
+      {tab === 'home'    && <Dashboard onNavigate={setTab}/>}
+      {tab === 'cards'   && <Cards/>}
+      {tab === 'stats'   && <Stats/>}
+      {tab === 'plan'    && <PlanPage/>}
+      {tab === 'profile' && <ProfilePage/>}
+      <BottomNav active={tab} onNavigate={setTab} onAddTx={() => setShowAddTx(true)}/>
       {showAddTx && (
-        <AddTransactionSheet plan={plan} user={user} today={today} cards={cards}
-          onClose={()=>setShowAddTx(false)} onAdded={()=>setShowAddTx(false)}/>
+        <AddTransactionSheet
+          plan={plan} user={user} today={today} cards={cards}
+          onClose={() => setShowAddTx(false)}
+          onAdded={() => setShowAddTx(false)}
+        />
       )}
     </>
   )
@@ -43,22 +68,24 @@ function AppInner() {
 
 function OAuthHandler({ children }) {
   const [ready, setReady] = useState(false)
+
   useEffect(() => {
     const hash = window.location.hash
     if (hash && hash.includes('access_token')) {
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-        if (['SIGNED_IN','SIGNED_OUT','TOKEN_REFRESHED'].includes(event)) {
-          window.history.replaceState(null,'',window.location.pathname)
+        if (['SIGNED_IN', 'SIGNED_OUT', 'TOKEN_REFRESHED'].includes(event)) {
+          window.history.replaceState(null, '', window.location.pathname)
           subscription.unsubscribe()
           setReady(true)
         }
       })
-      setTimeout(() => setReady(true), 3000)
-    } else { setReady(true) }
+      setTimeout(() => setReady(true), 4000)
+    } else {
+      setReady(true)
+    }
   }, [])
-  if (!ready) return (
-    <div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bg)',color:'rgba(255,255,255,0.3)',fontSize:'1.5rem'}}>⋯</div>
-  )
+
+  if (!ready) return <Spinner/>
   return children
 }
 
