@@ -29,14 +29,15 @@ jobs:
             "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects" \
             -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d '{"name":"kharj-app","production_branch":"main"}' || true
+            -d '{"name":"kharj-app","production_branch":"main"}' | python3 -c "import json,sys; d=json.load(sys.stdin); print('Project:', d.get('success'), d.get('errors',''))"
 
       - name: Deploy to Cloudflare Pages
         run: |
-          npx wrangler@latest pages deploy dist \
+          npx wrangler@3 pages deploy dist \
             --project-name=kharj-app \
             --branch=main \
-            --commit-dirty=true
+            --commit-dirty=true 2>&1
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_LOG: debug
