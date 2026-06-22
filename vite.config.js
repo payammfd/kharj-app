@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
-  base: '/kharj-app/',
   plugins: [
     react(),
     VitePWA({
@@ -12,12 +11,12 @@ export default defineConfig({
         name: 'خرج - مدیریت هزینه خانواده',
         short_name: 'خرج',
         description: 'دفتر هزینه مشترک خانواده',
-        theme_color: '#0C0C0E',
-        background_color: '#0C0C0E',
+        theme_color: '#0D0D14',
+        background_color: '#0D0D14',
         display: 'standalone',
         orientation: 'portrait',
-        scope: '/kharj-app/',
-        start_url: '/kharj-app/',
+        scope: '/',
+        start_url: '/',
         lang: 'fa',
         dir: 'rtl',
         icons: [
@@ -26,8 +25,9 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        navigateFallback: '/kharj-app/index.html'
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+        navigateFallback: '/index.html',
+        cleanupOutdatedCaches: true
       }
     })
   ]

@@ -1,219 +1,223 @@
-// src/pages/Dashboard.jsx
 import { useState, useEffect, useCallback } from 'react'
-import { supabase, MONTHS, toFa, todayJalali, formatAmount, jalaliMonthDays } from '../lib/supabase'
+import { supabase, MONTHS, toFa, todayJalali, fmtAmount } from '../lib/supabase'
 import { usePlan } from '../hooks/usePlan.jsx'
 import { useAuth } from '../hooks/useAuth.jsx'
-import AddSheet from '../components/AddSheet'
-import AnalysisSheet from '../components/AnalysisSheet'
-import ShareSheet from '../components/ShareSheet'
-import styles from './Dashboard.module.css'
+import BankCard from '../components/BankCard'
+import MemberAvatar from '../components/MemberAvatar'
+import AddTransactionSheet from '../components/AddTransactionSheet'
+import AddCardSheet from '../components/AddCardSheet'
+import s from './Dashboard.module.css'
 
-const CATEGORY_COLORS = {
-  'اینترنت':      { bg: '#1A2340', text: '#7EB3FF' },
-  'آب، برق، گاز': { bg: '#1A3028', text: '#52C98A' },
-  'خوراک':        { bg: '#2D2415', text: '#E8A84A' },
-  'حمل و نقل':    { bg: '#221A38', text: '#A992FF' },
-  'سلامت':        { bg: '#2D1A1A', text: '#FF8080' },
-  'پوشاک':        { bg: '#2D1A26', text: '#FF85B4' },
-  'تفریح':        { bg: '#2D1F17', text: '#FF9A6C' },
-  'آموزش':        { bg: '#1A2633', text: '#6BBFFF' },
-  'سایر':         { bg: '#222228', text: '#9090A0' },
-  'درآمد':        { bg: '#1A2D26', text: '#34C78A' },
+const CAT_COLORS = {
+  'اینترنت':{'bg':'rgba(123,110,255,0.15)','c':'#A89DFF'},
+  'آب، برق، گاز':{'bg':'rgba(52,211,154,0.15)','c':'#34D39A'},
+  'خوراک':{'bg':'rgba(239,159,39,0.15)','c':'#EF9F27'},
+  'حمل و نقل':{'bg':'rgba(168,157,255,0.15)','c':'#C4BCFF'},
+  'سلامت':{'bg':'rgba(255,107,107,0.15)','c':'#FF9090'},
+  'پوشاک':{'bg':'rgba(255,107,157,0.15)','c':'#FF85B4'},
+  'تفریح':{'bg':'rgba(255,142,83,0.15)','c':'#FF9A6C'},
+  'آموزش':{'bg':'rgba(79,172,254,0.15)','c':'#6BBFFF'},
+  'سایر':{'bg':'rgba(144,144,160,0.15)','c':'#9090A0'},
+  'درآمد':{'bg':'rgba(52,211,154,0.15)','c':'#34D39A'},
 }
 
-export default function Dashboard() {
+export default function Dashboard({ onNavigate }) {
   const { user } = useAuth()
-  const { plan, members } = usePlan()
+  const { plan, members, cards, loadCards } = usePlan()
   const [today] = useState(() => todayJalali())
-  const [viewMonth, setViewMonth] = useState(() => ({ jy: today[0], jm: today[1] }))
-  const [transactions, setTransactions] = useState([])
+  const [vm, setVm] = useState(() => ({ jy: today[0], jm: today[1] }))
+  const [txs, setTxs] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showAdd, setShowAdd] = useState(false)
-  const [showAnalysis, setShowAnalysis] = useState(false)
-  const [showShare, setShowShare] = useState(false)
+  const [activeCard, setActiveCard] = useState(0)
+  const [showAddTx, setShowAddTx] = useState(false)
+  const [showAddCard, setShowAddCard] = useState(false)
 
-  const loadTransactions = useCallback(async () => {
+  const loadTxs = useCallback(async () => {
     if (!plan) return
     setLoading(true)
-    const { data } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('plan_id', plan.id)
-      .eq('jy', viewMonth.jy)
-      .eq('jm', viewMonth.jm)
-      .order('jd', { ascending: false })
-      .order('created_at', { ascending: false })
-    setTransactions(data || [])
+    const { data } = await supabase.from('transactions').select('*')
+      .eq('plan_id', plan.id).eq('jy', vm.jy).eq('jm', vm.jm)
+      .order('jd', { ascending: false }).order('created_at', { ascending: false })
+    setTxs(data || [])
     setLoading(false)
-  }, [plan, viewMonth])
+  }, [plan, vm])
 
-  useEffect(() => { loadTransactions() }, [loadTransactions])
+  useEffect(() => { loadTxs() }, [loadTxs])
 
-  const totalIncome = transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0)
-  const totalExpense = transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0)
-  const balance = totalIncome - totalExpense
+  const income = txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0)
+  const expense = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0)
+  const balance = income - expense
+
+  const MIN_JM = 1, MIN_JY = 1405
+  const isMin = vm.jy===MIN_JY && vm.jm===MIN_JM
+  const isCur = vm.jy===today[0] && vm.jm===today[1]
 
   function prevMonth() {
-    setViewMonth(prev => {
-      if (prev.jm === 1) return { jy: prev.jy - 1, jm: 12 }
-      return { jy: prev.jy, jm: prev.jm - 1 }
-    })
+    if (isMin) return
+    setVm(p => p.jm===1?{jy:p.jy-1,jm:12}:{jy:p.jy,jm:p.jm-1})
   }
   function nextMonth() {
-    const isCurrentMonth = viewMonth.jy === today[0] && viewMonth.jm === today[1]
-    if (isCurrentMonth) return
-    setViewMonth(prev => {
-      if (prev.jm === 12) return { jy: prev.jy + 1, jm: 1 }
-      return { jy: prev.jy, jm: prev.jm + 1 }
-    })
+    if (isCur) return
+    setVm(p => p.jm===12?{jy:p.jy+1,jm:1}:{jy:p.jy,jm:p.jm+1})
   }
 
-  const isCurrentMonth = viewMonth.jy === today[0] && viewMonth.jm === today[1]
+  function getMember(uid) { return members.find(m=>m.user_id===uid) }
 
-  async function deleteTransaction(id) {
+  async function deleteTx(id) {
     await supabase.from('transactions').delete().eq('id', id)
-    setTransactions(prev => prev.filter(t => t.id !== id))
-  }
-
-  function getMemberName(userId) {
-    const m = members.find(m => m.user_id === userId)
-    return m?.display_name || '؟'
+    setTxs(prev => prev.filter(t=>t.id!==id))
   }
 
   return (
-    <div className={styles.page}>
+    <div className={s.page}>
+      {/* BG glow */}
+      <div className={s.glow1}/><div className={s.glow2}/>
+
       {/* Header */}
-      <header className={styles.header}>
-        <button className={styles.iconBtn} onClick={()=>setShowShare(true)} title="دعوت">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/>
-          </svg>
+      <header className={s.hdr}>
+        <button className={s.planBtn} onClick={() => onNavigate('plan')}>
+          <div className={s.planAvatar}>
+            {plan?.avatar_url
+              ? <img src={plan.avatar_url} alt="" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:'14px'}}/>
+              : <span style={{fontSize:'18px'}}>🏠</span>
+            }
+          </div>
+          <div>
+            <div className={s.planName}>{plan?.name}</div>
+            <div className={s.planSub}>{members.length} عضو</div>
+          </div>
         </button>
-        <span className={styles.planName}>{plan?.name || 'خرج'}</span>
-        <button className={styles.iconBtn} onClick={()=>setShowAnalysis(true)} title="تحلیل">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path d="M18 20V10M12 20V4M6 20v-6"/>
-          </svg>
-        </button>
+        <div className={s.membersAvatars}>
+          {members.slice(0,3).map((m,i) => (
+            <div key={m.user_id} style={{marginRight: i>0?'-8px':0, zIndex: members.length-i}}>
+              <MemberAvatar member={m} size={32}/>
+            </div>
+          ))}
+        </div>
       </header>
 
-      {/* Month Navigator */}
-      <div className={styles.monthNav}>
-        <button className={styles.navBtn} onClick={nextMonth} disabled={isCurrentMonth}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M9 18l6-6-6-6"/>
-          </svg>
-        </button>
-        <div className={styles.monthInfo}>
-          <span className={styles.monthName}>{MONTHS[viewMonth.jm-1]}</span>
-          <span className={styles.yearLabel}>{toFa(viewMonth.jy)}</span>
+      {/* Balance */}
+      <div className={s.balanceSec}>
+        <div className={s.balLabel}>مانده ماه</div>
+        <div className={s.balAmount}>{fmtAmount(Math.abs(balance))}</div>
+        <div className={s.balRow}>
+          <div>
+            <div className={s.balStatVal} style={{color:'#34D39A'}}>+{fmtAmount(income)}</div>
+            <div className={s.balStatLbl}>درآمد {MONTHS[vm.jm-1]}</div>
+          </div>
+          <div className={s.balDivider}/>
+          <div>
+            <div className={s.balStatVal} style={{color:'#FF6B6B'}}>−{fmtAmount(expense)}</div>
+            <div className={s.balStatLbl}>هزینه {MONTHS[vm.jm-1]}</div>
+          </div>
         </div>
-        <button className={styles.navBtn} onClick={prevMonth}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M15 18l-6-6 6-6"/>
-          </svg>
-        </button>
       </div>
 
-      {/* Summary Cards */}
-      <div className={styles.summary}>
-        <div className={styles.card}>
-          <span className={styles.cardLabel}>درآمد</span>
-          <span className={`${styles.cardValue} ${styles.green}`}>{formatAmount(totalIncome)}</span>
+      {/* Cards */}
+      <div className={s.cardsSec}>
+        <div className={s.secHeader}>
+          <span className={s.secTitle}>کارت‌های بانکی</span>
+          <button className={s.secAction} onClick={()=>setShowAddCard(true)}>+ افزودن</button>
         </div>
-        <div className={styles.card}>
-          <span className={styles.cardLabel}>هزینه</span>
-          <span className={`${styles.cardValue} ${styles.red}`}>{formatAmount(totalExpense)}</span>
+        {cards.length === 0 ? (
+          <button className={s.emptyCard} onClick={()=>setShowAddCard(true)}>
+            <span style={{fontSize:'24px'}}>+</span>
+            <span>افزودن کارت بانکی</span>
+          </button>
+        ) : (
+          <>
+            <div className={s.cardSlider}>
+              {cards.map((c,i) => (
+                <div key={c.id} className={s.cardSlide} style={{display: i===activeCard?'block':'none'}}>
+                  <BankCard card={c} active={true}/>
+                </div>
+              ))}
+            </div>
+            {cards.length > 1 && (
+              <div className={s.dots}>
+                {cards.map((_,i) => (
+                  <div key={i} className={`${s.dot} ${i===activeCard?s.dotOn:''}`}
+                    onClick={()=>setActiveCard(i)}/>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Month nav */}
+      <div className={s.monthNav}>
+        <button className={s.navBtn} onClick={nextMonth} disabled={isCur}>‹</button>
+        <div className={s.monthInfo}>
+          <div className={s.monthName}>{MONTHS[vm.jm-1]}</div>
+          <div className={s.monthYear}>{toFa(vm.jy)}</div>
         </div>
-        <div className={`${styles.card} ${styles.balanceCard}`}>
-          <span className={styles.cardLabel}>مانده</span>
-          <span className={`${styles.cardValue} ${balance >= 0 ? styles.green : styles.red}`}>
-            {formatAmount(Math.abs(balance))}
-          </span>
+        <button className={s.navBtn} onClick={prevMonth} disabled={isMin}>›</button>
+      </div>
+
+      {/* Summary */}
+      <div className={s.summary}>
+        <div className={s.sumCard}>
+          <div className={s.sumLbl}>درآمد</div>
+          <div className={s.sumVal} style={{color:'#34D39A'}}>{fmtAmount(income)}</div>
+        </div>
+        <div className={s.sumCard}>
+          <div className={s.sumLbl}>هزینه</div>
+          <div className={s.sumVal} style={{color:'#FF6B6B'}}>{fmtAmount(expense)}</div>
+        </div>
+        <div className={s.sumCard} style={{gridColumn:'1/-1',background:'rgba(123,110,255,0.08)',borderColor:'rgba(123,110,255,0.2)'}}>
+          <div className={s.sumLbl}>مانده</div>
+          <div className={s.sumVal} style={{color:'#A89DFF',fontSize:'15px'}}>{fmtAmount(Math.abs(balance))}</div>
         </div>
       </div>
 
       {/* Transactions */}
-      <div className={styles.listWrap}>
-        {loading ? (
-          <div className={styles.empty}>
-            <span className={styles.emptyIcon}>⋯</span>
-          </div>
-        ) : transactions.length === 0 ? (
-          <div className={styles.empty}>
-            <span className={styles.emptyIcon}>○</span>
-            <p>هنوز تراکنشی ثبت نشده</p>
-          </div>
-        ) : (
-          <div className={styles.list}>
-            {transactions.map(t => {
-              const colors = CATEGORY_COLORS[t.type==='income'?'درآمد':t.category] || CATEGORY_COLORS['سایر']
-              const isOwn = t.user_id === user?.id
-              return (
-                <div key={t.id} className={styles.row}>
-                  <div className={styles.rowRight}>
-                    <span className={styles.catBadge} style={{background:colors.bg,color:colors.text}}>
-                      {t.type==='income' ? 'درآمد' : t.category}
-                    </span>
-                    <div className={styles.rowMeta}>
-                      <span className={styles.rowDesc}>{t.description}</span>
-                      <span className={styles.rowSub}>
-                        {toFa(t.jd)} {MONTHS[t.jm-1]} · {getMemberName(t.user_id)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className={styles.rowLeft}>
-                    <span className={`${styles.amount} ${t.type==='expense'?styles.red:styles.green}`}>
-                      {t.type==='expense'?'−':'+'}
-                      {toFa((t.amount/1000).toLocaleString())}
-                      <span className={styles.unit}>K</span>
-                    </span>
-                    {isOwn && (
-                      <button className={styles.delBtn} onClick={()=>deleteTransaction(t.id)}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M18 6L6 18M6 6l12 12"/>
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
+      <div className={s.txHdr}>
+        <span className={s.txTitle}>تراکنش‌ها</span>
+        {txs.length > 0 && <button className={s.txStats} onClick={()=>onNavigate('stats')}>آمار ←</button>}
       </div>
 
-      {/* FAB */}
-      <button className={styles.fab} onClick={()=>setShowAdd(true)}>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <path d="M12 5v14M5 12h14"/>
-        </svg>
-      </button>
+      <div className={s.txList}>
+        {loading ? (
+          <div className={s.empty}><div className={s.emptyIcon}>⋯</div></div>
+        ) : txs.length === 0 ? (
+          <div className={s.empty}>
+            <div className={s.emptyIcon}>○</div>
+            <p>هنوز تراکنشی ثبت نشده</p>
+          </div>
+        ) : txs.map(t => {
+          const col = CAT_COLORS[t.type==='income'?'درآمد':t.category] || CAT_COLORS['سایر']
+          const member = getMember(t.user_id)
+          const isOwn = t.user_id === user?.id
+          return (
+            <div key={t.id} className={s.txRow}>
+              <MemberAvatar member={member} size={36}/>
+              <div className={s.txInfo}>
+                <span className={s.catBadge} style={{background:col.bg,color:col.c}}>
+                  {t.type==='income'?'درآمد':t.category}
+                </span>
+                <div className={s.txDesc}>{t.description}</div>
+                <div className={s.txSub}>{toFa(t.jd)} {MONTHS[t.jm-1]} · {member?.display_name||'؟'}</div>
+              </div>
+              <div className={s.txRight}>
+                <div className={s.txAmt} style={{color:t.type==='expense'?'#FF6B6B':'#34D39A'}}>
+                  {t.type==='expense'?'−':'+'}{fmtAmount(t.amount)}
+                </div>
+                {isOwn && (
+                  <button className={s.delBtn} onClick={()=>deleteTx(t.id)}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  </button>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
 
-      {/* Sheets */}
-      {showAdd && (
-        <AddSheet
-          plan={plan}
-          user={user}
-          today={today}
-          onClose={()=>setShowAdd(false)}
-          onAdded={()=>{ setShowAdd(false); loadTransactions() }}
-        />
-      )}
-      {showAnalysis && (
-        <AnalysisSheet
-          transactions={transactions}
-          month={viewMonth}
-          onClose={()=>setShowAnalysis(false)}
-        />
-      )}
-      {showShare && (
-        <ShareSheet
-          plan={plan}
-          members={members}
-          onClose={()=>setShowShare(false)}
-        />
-      )}
+      {showAddTx && <AddTransactionSheet plan={plan} user={user} today={today} cards={cards}
+        onClose={()=>setShowAddTx(false)} onAdded={()=>{setShowAddTx(false);loadTxs()}}/>}
+      {showAddCard && <AddCardSheet onClose={()=>setShowAddCard(false)}
+        onAdded={()=>{setShowAddCard(false);loadCards(plan.id)}}/>}
     </div>
   )
 }

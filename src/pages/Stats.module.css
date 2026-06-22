@@ -1,0 +1,39 @@
+.page{display:flex;flex-direction:column;min-height:100dvh;padding-bottom:calc(var(--nav-h)+var(--safe-b));position:relative;overflow-x:hidden}
+.glow{position:fixed;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(107,91,255,0.12) 0%,transparent 70%);top:-60px;left:50%;transform:translateX(-50%);pointer-events:none;z-index:0}
+.hdr{padding:18px 20px 8px;position:relative;z-index:2}
+.title{font-size:20px;font-weight:700}
+.monthNav{display:flex;align-items:center;justify-content:space-between;padding:4px 20px 14px;position:relative;z-index:2}
+.navBtn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text-2);font-size:18px;display:flex;align-items:center;justify-content:center}
+.navBtn:disabled{opacity:0.25;cursor:not-allowed;transform:none}
+.monthInfo{text-align:center}
+.monthName{font-size:18px;font-weight:700}
+.monthYear{font-size:11px;color:var(--text-3);margin-top:2px}
+.totals{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px 16px;position:relative;z-index:2}
+.totalCard{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:16px;padding:14px}
+.totalLbl{font-size:10px;color:var(--text-3);margin-bottom:5px}
+.totalVal{font-size:12px;font-weight:700}
+.viewToggle{display:flex;background:rgba(255,255,255,0.04);border-radius:12px;padding:3px;margin:0 20px 16px;gap:3px;position:relative;z-index:2}
+.viewBtn{flex:1;padding:8px 4px;border-radius:10px;font-size:11px;font-family:var(--font);color:var(--text-2);background:transparent;border:none;transition:all 0.15s}
+.viewActive{background:rgba(123,110,255,0.2);color:var(--accent)}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:200px;color:var(--text-3);font-size:0.88rem;position:relative;z-index:2}
+.donutWrap{display:flex;flex-direction:column;align-items:center;gap:20px;padding:0 20px;position:relative;z-index:2}
+.legend{width:100%;display:flex;flex-direction:column;gap:8px}
+.legendItem{display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:12px;border:1px solid var(--border)}
+.legendDot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.legendCat{flex:1;font-size:13px;font-weight:500}
+.legendPct{font-size:12px;color:var(--text-2);min-width:32px;text-align:center}
+.legendAmt{font-size:12px;font-weight:600;color:var(--text)}
+.barList{padding:0 20px;display:flex;flex-direction:column;gap:12px;position:relative;z-index:2}
+.barItem{display:flex;flex-direction:column;gap:6px}
+.barHeader{display:flex;justify-content:space-between;align-items:center}
+.barCat{font-size:13px;font-weight:500}
+.barAmt{font-size:12px;font-weight:600;color:var(--text-2)}
+.barTrack{height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden}
+.barFill{height:100%;border-radius:3px;transition:width 0.5s ease}
+.tableWrap{padding:0 20px;position:relative;z-index:2;display:flex;flex-direction:column;gap:2px}
+.tableRow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid var(--border)}
+.tableDot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.tableCat{flex:1;font-size:13px;font-weight:500}
+.tablePct{font-size:11px;color:var(--text-2);min-width:36px;text-align:center}
+.tableAmt{font-size:12px;font-weight:600}
+.tableTotal{display:flex;justify-content:space-between;padding:12px 14px;margin-top:4px;background:rgba(123,110,255,0.08);border-radius:12px;border:1px solid rgba(123,110,255,0.2);font-size:13px;font-weight:700;color:var(--accent)}

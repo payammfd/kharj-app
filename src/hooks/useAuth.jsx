@@ -8,20 +8,28 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // First check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       setLoading(false)
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+
+    // Listen for auth changes (including OAuth redirects)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
+      setLoading(false)
     })
+
     return () => subscription.unsubscribe()
   }, [])
 
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + window.location.pathname }
+      options: {
+        redirectTo: 'https://payammfd.github.io/kharj-app/',
+        queryParams: { prompt: 'select_account' }
+      }
     })
     if (error) throw error
   }
@@ -29,7 +37,7 @@ export function AuthProvider({ children }) {
   const signInWithMagicLink = async (email) => {
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: window.location.origin + window.location.pathname }
+      options: { emailRedirectTo: 'https://payammfd.github.io/kharj-app/' }
     })
     if (error) throw error
   }

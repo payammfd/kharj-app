@@ -1,0 +1,21 @@
+.field { display:flex;flex-direction:column;gap:6px; }
+.lbl { font-size:0.8rem;color:var(--text-2);font-weight:500;padding-right:2px; }
+.typeRow { display:flex;gap:8px; }
+.typeBtn { flex:1;padding:11px;border-radius:var(--r-md);font-size:0.9rem;font-weight:600;font-family:var(--font);background:var(--bg-el);color:var(--text-2);border:1px solid var(--border); }
+.typeBtn.expense { background:var(--red-soft);color:var(--red);border-color:rgba(255,107,107,0.3); }
+.typeBtn.income { background:var(--green-soft);color:var(--green);border-color:rgba(52,211,154,0.3); }
+.catGrid { display:flex;flex-wrap:wrap;gap:8px; }
+.catBtn { padding:7px 12px;border-radius:20px;font-size:0.8rem;font-family:var(--font);background:var(--bg-el);color:var(--text-2);border:1px solid var(--border);transition:all 0.15s; }
+.catBtn:hover { color:var(--text);border-color:var(--border-md); }
+.catActive { background:var(--accent-soft);color:var(--accent);border-color:var(--accent)!important; }
+.dateRow { display:flex;gap:8px; }
+.dateRow select { flex:1; }
+.submitBtn { padding:14px;border-radius:var(--r-lg);background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-size:0.95rem;font-weight:600;font-family:var(--font);border:none; }
+.submitBtn:hover { opacity:0.9; }
+.submitBtn:disabled { opacity:0.5;cursor:not-allowed;transform:none; }
+.bankGrid { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px; }
+.bankOpt { padding:10px 6px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--bg-el);text-align:center;cursor:pointer;font-size:11px;color:var(--text-2);transition:all 0.15s; }
+.bankOpt.sel { border-color:var(--accent);background:var(--accent-soft);color:var(--accent); }
+.bankDot { width:22px;height:22px;border-radius:50%;margin:0 auto 5px; }
+.inpRow2 { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+.inpLtr { direction:ltr; }
