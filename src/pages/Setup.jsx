@@ -6,8 +6,8 @@ import s from './Setup.module.css'
 export default function Setup() {
   const { user } = useAuth()
   const { createPlan, joinPlan } = usePlan()
-  const [tab, setTab] = useState('join') // default to join - most common case
-  const [name, setName] = useState('')
+  const [tab, setTab] = useState('join')
+  const [planName, setPlanName] = useState('')
   const [displayName, setDisplayName] = useState(
     user?.user_metadata?.full_name?.split(' ')[0] || ''
   )
@@ -19,7 +19,7 @@ export default function Setup() {
     e.preventDefault()
     if (!displayName.trim()) return setErr('اسمت رو وارد کن')
     setLoading(true); setErr('')
-    try { await createPlan(name || 'خانه ما', displayName) }
+    try { await createPlan(planName, displayName) }
     catch(e) { setErr(e.message) }
     finally { setLoading(false) }
   }
@@ -35,35 +35,33 @@ export default function Setup() {
 
   return (
     <div className={s.wrap}>
+      <div className={s.glow}/>
       <div className={s.content}>
 
-        {/* User info */}
-        <div className={s.userBadge}>
-          {user?.user_metadata?.avatar_url && (
-            <img src={user.user_metadata.avatar_url} alt="" className={s.userAvatar}/>
-          )}
-          <span className={s.userEmail}>{user?.email}</span>
+        {/* User chip */}
+        <div className={s.userChip}>
+          {user?.user_metadata?.avatar_url &&
+            <img src={user.user_metadata.avatar_url} alt="" className={s.chipAvatar}/>
+          }
+          <span>{user?.email}</span>
         </div>
 
-        <h1 className={s.title}>به کدوم پلن وصل شیم؟</h1>
-        <p className={s.sub}>اگه پلن داری کدش رو وارد کن، وگرنه یه پلن جدید بساز</p>
+        <h1 className={s.title}>شروع کن</h1>
+        <p className={s.sub}>به پلن موجود بپیوند یا یه پلن جدید بساز</p>
 
         {/* Tabs */}
         <div className={s.tabs}>
-          <button
-            className={`${s.tab} ${tab==='join'?s.active:''}`}
-            onClick={()=>{ setTab('join'); setErr('') }}>
-            پیوستن به پلن
+          <button className={`${s.tab} ${tab==='join'?s.active:''}`}
+            onClick={()=>{setTab('join');setErr('')}}>
+            پیوستن با کد
           </button>
-          <button
-            className={`${s.tab} ${tab==='create'?s.active:''}`}
-            onClick={()=>{ setTab('create'); setErr('') }}>
+          <button className={`${s.tab} ${tab==='create'?s.active:''}`}
+            onClick={()=>{setTab('create');setErr('')}}>
             پلن جدید
           </button>
         </div>
 
         <form onSubmit={tab==='join'?handleJoin:handleCreate} className={s.form}>
-
           <div className={s.field}>
             <label className={s.lbl}>اسم نمایشی تو</label>
             <input
@@ -75,22 +73,21 @@ export default function Setup() {
 
           {tab === 'join' ? (
             <div className={s.field}>
-              <label className={s.lbl}>کد دعوت پلن</label>
+              <label className={s.lbl}>کد دعوت</label>
               <input
                 value={code}
                 onChange={e=>setCode(e.target.value.toUpperCase())}
                 placeholder="مثلاً: 209BCDCF"
-                style={{letterSpacing:'0.2em', textAlign:'center', direction:'ltr'}}
+                style={{letterSpacing:'0.25em',textAlign:'center',direction:'ltr'}}
                 autoFocus
               />
-              <span className={s.hint}>کد رو از عضو دیگه پلن بگیر</span>
             </div>
           ) : (
             <div className={s.field}>
-              <label className={s.lbl}>اسم پلن (اختیاری)</label>
+              <label className={s.lbl}>اسم پلن</label>
               <input
-                value={name}
-                onChange={e=>setName(e.target.value)}
+                value={planName}
+                onChange={e=>setPlanName(e.target.value)}
                 placeholder="مثلاً: خانه ما"
               />
             </div>
@@ -99,7 +96,7 @@ export default function Setup() {
           {err && <p className={s.err}>{err}</p>}
 
           <button className={s.btn} type="submit" disabled={loading}>
-            {loading ? '...' : tab==='join' ? 'پیوستن به پلن' : 'ساخت پلن جدید'}
+            {loading ? '...' : tab==='join' ? 'پیوستن' : 'ساختن پلن'}
           </button>
         </form>
 

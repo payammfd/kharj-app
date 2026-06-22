@@ -6,7 +6,8 @@ const PlanContext = createContext(null)
 
 export function PlanProvider({ children }) {
   const { user } = useAuth()
-  const [plan, setPlan] = useState(null)
+  const [allPlans, setAllPlans] = useState([])   // all plans user belongs to
+  const [plan, setPlan] = useState(null)          // currently active plan
   const [members, setMembers] = useState([])
   const [cards, setCards] = useState([])
   const [loading, setLoading] = useState(true)
@@ -14,59 +15,63 @@ export function PlanProvider({ children }) {
 
   useEffect(() => {
     if (!user) {
-      setPlan(null); setMembers([]); setCards([])
+      setAllPlans([]); setPlan(null); setMembers([]); setCards([])
       setLoading(false); retryRef.current = 0
       return
     }
     retryRef.current = 0
-    loadPlan()
+    loadAllPlans()
   }, [user])
 
-  async function loadPlan() {
+  async function loadAllPlans() {
     setLoading(true)
     try {
-      // Always get a fresh session before querying
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
-        // If no session yet, retry up to 3 times with delay
-        if (retryRef.current < 3) {
+        if (retryRef.current < 4) {
           retryRef.current++
-          setTimeout(() => loadPlan(), 1500)
+          setTimeout(() => loadAllPlans(), 1500)
           return
         }
         setLoading(false)
         return
       }
 
-      const { data: membership, error } = await supabase
+      const { data: memberships, error } = await supabase
         .from('plan_members')
         .select('plan_id, display_name, plans(*)')
         .eq('user_id', session.user.id)
-        .limit(1)
-        .maybeSingle()
 
       if (error) throw error
 
-      if (membership?.plans) {
-        setPlan(membership.plans)
-        await Promise.all([
-          loadMembers(membership.plan_id),
-          loadCards(membership.plan_id)
-        ])
+      const plans = (memberships || []).map(m => m.plans).filter(Boolean)
+      setAllPlans(plans)
+
+      if (plans.length === 1) {
+        // Exactly one plan — go straight in
+        await selectPlan(plans[0])
+      } else if (plans.length > 1) {
+        // Multiple plans — let user choose (plan stays null, allPlans has items)
+        setPlan(null)
       } else {
+        // No plans
         setPlan(null)
       }
     } catch (e) {
-      console.error('loadPlan error:', e)
-      // Retry on error
-      if (retryRef.current < 3) {
+      console.error('loadAllPlans error:', e)
+      if (retryRef.current < 4) {
         retryRef.current++
-        setTimeout(() => loadPlan(), 1500)
+        setTimeout(() => loadAllPlans(), 1500)
         return
       }
     } finally {
       setLoading(false)
     }
+  }
+
+  async function selectPlan(p) {
+    setPlan(p)
+    await Promise.all([loadMembers(p.id), loadCards(p.id)])
   }
 
   async function loadMembers(planId) {
@@ -79,30 +84,24 @@ export function PlanProvider({ children }) {
 
   async function loadCards(planId) {
     const { data } = await supabase
-      .from('bank_cards')
-      .select('*')
-      .eq('plan_id', planId)
-      .order('created_at')
+      .from('bank_cards').select('*')
+      .eq('plan_id', planId).order('created_at')
     setCards(data || [])
   }
 
   async function createPlan(name, displayName) {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) throw new Error('لطفاً دوباره وارد شوید')
-
     const { data: newPlan, error } = await supabase
       .from('plans')
       .insert({ name: name || 'خانه ما', created_by: session.user.id })
       .select().single()
     if (error) throw error
-
     await supabase.from('plan_members').insert({
-      plan_id: newPlan.id,
-      user_id: session.user.id,
-      display_name: displayName
+      plan_id: newPlan.id, user_id: session.user.id, display_name: displayName
     })
-    setPlan(newPlan)
-    await loadMembers(newPlan.id)
+    setAllPlans(prev => [...prev, newPlan])
+    await selectPlan(newPlan)
     return newPlan
   }
 
@@ -111,36 +110,26 @@ export function PlanProvider({ children }) {
     if (!session) throw new Error('لطفاً دوباره وارد شوید')
 
     const { data: targetPlan } = await supabase
-      .from('plans')
-      .select()
+      .from('plans').select()
       .eq('invite_code', inviteCode.toUpperCase().trim())
       .maybeSingle()
     if (!targetPlan) throw new Error('کد دعوت اشتباه است')
 
-    // Check if already a member
+    // Already a member? Just select it
     const { data: existing } = await supabase
-      .from('plan_members')
-      .select('id')
-      .eq('plan_id', targetPlan.id)
-      .eq('user_id', session.user.id)
+      .from('plan_members').select('id')
+      .eq('plan_id', targetPlan.id).eq('user_id', session.user.id)
       .maybeSingle()
 
-    if (existing) {
-      // Already a member - just load the plan
-      setPlan(targetPlan)
-      await Promise.all([loadMembers(targetPlan.id), loadCards(targetPlan.id)])
-      return targetPlan
+    if (!existing) {
+      const { error } = await supabase.from('plan_members').insert({
+        plan_id: targetPlan.id, user_id: session.user.id, display_name: displayName
+      })
+      if (error) throw error
     }
 
-    const { error } = await supabase.from('plan_members').insert({
-      plan_id: targetPlan.id,
-      user_id: session.user.id,
-      display_name: displayName
-    })
-    if (error) throw error
-
-    setPlan(targetPlan)
-    await Promise.all([loadMembers(targetPlan.id), loadCards(targetPlan.id)])
+    setAllPlans(prev => prev.find(p => p.id === targetPlan.id) ? prev : [...prev, targetPlan])
+    await selectPlan(targetPlan)
     return targetPlan
   }
 
@@ -149,14 +138,14 @@ export function PlanProvider({ children }) {
       .from('plans').update(updates).eq('id', plan.id).select().single()
     if (error) throw error
     setPlan(data)
+    setAllPlans(prev => prev.map(p => p.id === data.id ? data : p))
     return data
   }
 
   async function addCard(cardData) {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) throw new Error('لطفاً دوباره وارد شوید')
-    const { data, error } = await supabase
-      .from('bank_cards')
+    const { data, error } = await supabase.from('bank_cards')
       .insert({ ...cardData, plan_id: plan.id, user_id: session.user.id })
       .select().single()
     if (error) throw error
@@ -171,10 +160,9 @@ export function PlanProvider({ children }) {
 
   return (
     <PlanContext.Provider value={{
-      plan, members, cards, loading,
-      loadPlan, loadMembers, loadCards,
-      createPlan, joinPlan, updatePlan,
-      addCard, deleteCard
+      allPlans, plan, members, cards, loading,
+      loadAllPlans, selectPlan, loadMembers, loadCards,
+      createPlan, joinPlan, updatePlan, addCard, deleteCard
     }}>
       {children}
     </PlanContext.Provider>

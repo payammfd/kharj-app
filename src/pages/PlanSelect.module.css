@@ -1,0 +1,49 @@
+.wrap {
+  min-height: 100dvh; display: flex; align-items: center;
+  justify-content: center; padding: 2rem 1.5rem;
+  background: var(--bg); position: relative; overflow: hidden;
+}
+.glow {
+  position: fixed; width: 300px; height: 300px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(123,110,255,0.15) 0%, transparent 70%);
+  top: -80px; right: -60px; pointer-events: none;
+}
+.content {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 1rem; width: 100%; max-width: 360px; position: relative; z-index: 1;
+}
+.logo {
+  width: 60px; height: 60px; border-radius: 18px;
+  background: linear-gradient(135deg,#7B6EFF,#4FACFE);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; font-weight: 700; color: #fff;
+}
+.title { font-size: 1.8rem; font-weight: 700; margin-top: 4px; }
+.sub { font-size: 0.88rem; color: var(--text-2); font-weight: 300; margin-top: -4px; }
+
+.list { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+
+.planCard {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px; border-radius: 18px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border-md);
+  width: 100%; text-align: right; font-family: var(--font);
+  transition: all 0.15s;
+}
+.planCard:hover { background: rgba(123,110,255,0.1); border-color: var(--accent); }
+.planCard:active { transform: scale(0.98); }
+
+.planAvatar {
+  width: 48px; height: 48px; border-radius: 14px;
+  background: linear-gradient(135deg,#7B6EFF,#4FACFE);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; flex-shrink: 0; overflow: hidden;
+}
+.planImg { width: 100%; height: 100%; object-fit: cover; }
+.planInfo { flex: 1; }
+.planName { font-size: 1rem; font-weight: 600; color: var(--text); }
+.planCode { font-size: 0.75rem; color: var(--text-3); margin-top: 3px; direction: ltr; }
+.arrow { font-size: 1.4rem; color: var(--text-3); }
+
+.email { font-size: 0.75rem; color: var(--text-3); margin-top: 8px; }
