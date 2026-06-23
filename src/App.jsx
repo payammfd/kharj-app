@@ -77,18 +77,6 @@ export default function App() {
       async (event, session) => {
         console.log('[auth]', event, session?.user?.email)
 
-        // اگه provider خطا برگردونه (مثلاً access_denied)، تو URL میاد - نشونش بده
-        const params = new URLSearchParams(window.location.search)
-        if (params.get('error')) {
-          console.error('[auth] OAuth redirect error:', params.get('error'), params.get('error_description'))
-          alert('خطا در ورود با Google: ' + (params.get('error_description') || params.get('error')))
-        }
-
-        // با PKCE، code در query param هست - بعد از exchange، URL رو پاک کن
-        if (window.location.search?.includes('code=') || params.get('error')) {
-          window.history.replaceState(null, '', window.location.pathname)
-        }
-
         if (event === 'SIGNED_OUT' || (!session && event !== 'INITIAL_SESSION')) {
           setState(s => ({...s, status:'loggedout', user:null, allPlans:[], plan:null}))
           return
@@ -106,17 +94,60 @@ export default function App() {
   }, [loadPlans])
 
   const actions = {
-    signInWithGoogle: async () => {
-      // redirectTo باید همون origin فعلی باشه (localhost موقع تست، pages.dev در production)
-      // وگرنه با PKCE، code_verifier در localStorage یه origin دیگه می‌مونه و exchange شکست می‌خوره
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+    // ثبت‌نام با ایمیل و رمز عبور. اگه تایید ایمیل فعال باشه، یه کد OTP به ایمیل میاد.
+    // خروجی: { needsOtp } — اگه true باشه باید کاربر کد رو وارد کنه.
+    signUp: async ({ email, password, firstName, lastName }) => {
+      const e = email.trim().toLowerCase()
+      const fullName = [firstName, lastName].filter(Boolean).join(' ').trim()
+      const { data, error } = await supabase.auth.signUp({
+        email: e,
+        password,
         options: {
-          redirectTo: window.location.origin + '/',
-          queryParams: { prompt: 'select_account' }
-        }
+          data: { first_name: firstName?.trim(), last_name: lastName?.trim(), full_name: fullName },
+        },
       })
-      if (error) { console.error('[auth] signInWithOAuth error:', error); alert('خطا در ورود: ' + error.message) }
+      if (error) throw error
+      // اگه session نیومد یعنی نیاز به تایید ایمیل (OTP) هست
+      return { needsOtp: !data.session }
+    },
+    // تایید کد OTP که به ایمیل اومده (هم برای ثبت‌نام هم ورودِ تاییدنشده)
+    verifyOtp: async ({ email, token }) => {
+      const { error } = await supabase.auth.verifyOtp({
+        email: email.trim().toLowerCase(),
+        token: token.trim(),
+        type: 'email',
+      })
+      if (error) throw error
+    },
+    // ارسال مجدد کد تایید
+    resendOtp: async (email) => {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email.trim().toLowerCase(),
+      })
+      if (error) throw error
+    },
+    // ورود با رمز عبور. اگه ایمیل هنوز تایید نشده، { needsOtp:true } برمی‌گردونه.
+    signInWithPassword: async ({ email, password }) => {
+      const e = email.trim().toLowerCase()
+      const { error } = await supabase.auth.signInWithPassword({ email: e, password })
+      if (error) {
+        const msg = (error.message || '').toLowerCase()
+        if (msg.includes('not confirmed') || msg.includes('confirm')) {
+          // ایمیل تایید نشده — یه کد بفرست و کاربر رو ببر مرحله‌ی OTP
+          try { await supabase.auth.resend({ type: 'signup', email: e }) } catch {}
+          return { needsOtp: true }
+        }
+        throw error
+      }
+      return { needsOtp: false }
+    },
+    // ارسال لینک بازنشانی رمز عبور به ایمیل
+    resetPassword: async (email) => {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+        redirectTo: window.location.origin + '/',
+      })
+      if (error) throw error
     },
     signOut: async () => { await supabase.auth.signOut() },
     selectPlan: async (p) => {

@@ -1,6 +1,81 @@
+import { useState } from 'react'
 import s from './Login.module.css'
 
 export default function Login({ actions }) {
+  const [mode, setMode] = useState('signin') // signin | signup | otp
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '' })
+  const [otp, setOtp] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
+
+  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
+
+  async function handleSignup(e) {
+    e.preventDefault()
+    setError(''); setInfo('')
+    if (!form.firstName.trim()) return setError('نام را وارد کنید')
+    if (!form.email.trim()) return setError('ایمیل را وارد کنید')
+    if (form.password.length < 6) return setError('رمز عبور باید حداقل ۶ کاراکتر باشد')
+    setLoading(true)
+    try {
+      const { needsOtp } = await actions.signUp(form)
+      if (needsOtp) {
+        setMode('otp')
+        setInfo('کد تایید به ایمیل شما ارسال شد')
+      }
+      // اگه needsOtp false باشه، session ساخته شده و App خودش رد میشه
+    } catch (err) {
+      setError(translateErr(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleSignin(e) {
+    e.preventDefault()
+    setError(''); setInfo('')
+    if (!form.email.trim()) return setError('ایمیل را وارد کنید')
+    if (!form.password) return setError('رمز عبور را وارد کنید')
+    setLoading(true)
+    try {
+      const { needsOtp } = await actions.signInWithPassword(form)
+      if (needsOtp) {
+        setMode('otp')
+        setInfo('ایمیل شما هنوز تایید نشده. کد تایید ارسال شد')
+      }
+    } catch (err) {
+      setError(translateErr(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleVerify(e) {
+    e.preventDefault()
+    setError(''); setInfo('')
+    if (otp.trim().length < 6) return setError('کد ۶ رقمی را کامل وارد کنید')
+    setLoading(true)
+    try {
+      await actions.verifyOtp({ email: form.email, token: otp })
+      // موفق → session ساخته میشه → App خودش رد میشه
+    } catch (err) {
+      setError(translateErr(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleResend() {
+    setError(''); setInfo('')
+    try {
+      await actions.resendOtp(form.email)
+      setInfo('کد جدید ارسال شد')
+    } catch (err) {
+      setError(translateErr(err))
+    }
+  }
+
   return (
     <div className={s.wrap}>
       <div className={s.glow1}/><div className={s.glow2}/>
@@ -8,22 +83,77 @@ export default function Login({ actions }) {
         <div className={s.logo}>خ</div>
         <h1 className={s.appName}>خرج</h1>
         <p className={s.tagline}>دفتر هزینه مشترک خانواده</p>
-        <div className={s.features}>
-          <div className={s.feature}><span className={s.fi}>💳</span><span>مدیریت کارت‌های بانکی</span></div>
-          <div className={s.feature}><span className={s.fi}>👨‍👩‍👧</span><span>اشتراک‌گذاری با خانواده</span></div>
-          <div className={s.feature}><span className={s.fi}>📊</span><span>آمار و نمودار ماهانه</span></div>
-        </div>
-        <button className={s.googleBtn} onClick={actions.signInWithGoogle}>
-          <svg width="20" height="20" viewBox="0 0 24 24">
-            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-          </svg>
-          ورود با Google
-        </button>
-        <p className={s.hint}>با ورود، حساب کاربری ساخته یا وارد می‌شید</p>
+
+        {error && <div className={s.error}>{error}</div>}
+        {info && <div className={s.info}>{info}</div>}
+
+        {mode === 'signin' && (
+          <form className={s.form} onSubmit={handleSignin}>
+            <input className={s.input} type="email" inputMode="email" autoComplete="email"
+              placeholder="ایمیل" value={form.email} onChange={set('email')} dir="ltr"/>
+            <input className={s.input} type="password" autoComplete="current-password"
+              placeholder="رمز عبور" value={form.password} onChange={set('password')} dir="ltr"/>
+            <button className={s.primaryBtn} type="submit" disabled={loading}>
+              {loading ? '...' : 'ورود'}
+            </button>
+            <button type="button" className={s.linkBtn}
+              onClick={() => { setMode('signup'); setError(''); setInfo('') }}>
+              حساب ندارید؟ ثبت‌نام کنید
+            </button>
+          </form>
+        )}
+
+        {mode === 'signup' && (
+          <form className={s.form} onSubmit={handleSignup}>
+            <div className={s.row}>
+              <input className={s.input} placeholder="نام" value={form.firstName} onChange={set('firstName')}/>
+              <input className={s.input} placeholder="نام خانوادگی" value={form.lastName} onChange={set('lastName')}/>
+            </div>
+            <input className={s.input} type="email" inputMode="email" autoComplete="email"
+              placeholder="ایمیل" value={form.email} onChange={set('email')} dir="ltr"/>
+            <input className={s.input} type="password" autoComplete="new-password"
+              placeholder="رمز عبور (حداقل ۶ کاراکتر)" value={form.password} onChange={set('password')} dir="ltr"/>
+            <button className={s.primaryBtn} type="submit" disabled={loading}>
+              {loading ? '...' : 'ثبت‌نام'}
+            </button>
+            <button type="button" className={s.linkBtn}
+              onClick={() => { setMode('signin'); setError(''); setInfo('') }}>
+              قبلاً ثبت‌نام کرده‌اید؟ ورود
+            </button>
+          </form>
+        )}
+
+        {mode === 'otp' && (
+          <form className={s.form} onSubmit={handleVerify}>
+            <p className={s.hint}>کد ۶ رقمی ارسال‌شده به <b dir="ltr">{form.email}</b> را وارد کنید</p>
+            <input className={s.input} inputMode="numeric" autoComplete="one-time-code"
+              placeholder="------" value={otp} maxLength={6}
+              onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
+              dir="ltr" style={{ textAlign: 'center', letterSpacing: '0.4em', fontSize: '1.3rem' }}/>
+            <button className={s.primaryBtn} type="submit" disabled={loading}>
+              {loading ? '...' : 'تایید'}
+            </button>
+            <button type="button" className={s.linkBtn} onClick={handleResend}>
+              کد را دریافت نکردید؟ ارسال مجدد
+            </button>
+            <button type="button" className={s.linkBtn}
+              onClick={() => { setMode('signin'); setOtp(''); setError(''); setInfo('') }}>
+              بازگشت
+            </button>
+          </form>
+        )}
       </div>
     </div>
   )
+}
+
+function translateErr(err) {
+  const m = (err?.message || '').toLowerCase()
+  if (m.includes('invalid login') || m.includes('invalid credentials')) return 'ایمیل یا رمز عبور اشتباه است'
+  if (m.includes('already registered') || m.includes('already been registered')) return 'این ایمیل قبلاً ثبت شده است'
+  if (m.includes('token has expired') || m.includes('invalid') && m.includes('otp')) return 'کد نامعتبر یا منقضی شده است'
+  if (m.includes('expired')) return 'کد منقضی شده است، دوباره ارسال کنید'
+  if (m.includes('rate limit') || m.includes('too many')) return 'تعداد درخواست‌ها زیاد است، کمی صبر کنید'
+  if (m.includes('password') && m.includes('6')) return 'رمز عبور باید حداقل ۶ کاراکتر باشد'
+  return err?.message || 'خطایی رخ داد، دوباره تلاش کنید'
 }

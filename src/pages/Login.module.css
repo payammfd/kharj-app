@@ -50,20 +50,60 @@
 }
 .featureIcon { font-size: 1.1rem; width: 24px; text-align: center; }
 
-.googleBtn {
-  display: flex; align-items: center; justify-content: center; gap: 10px;
+.form {
+  display: flex; flex-direction: column; gap: 12px;
+  width: 100%; margin-top: 8px;
+}
+.row { display: flex; gap: 10px; }
+.row > .input { flex: 1; min-width: 0; }
+
+.input {
+  width: 100%; padding: 14px 16px;
+  border-radius: var(--r-lg);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  color: var(--text); font-size: 0.95rem; font-family: var(--font);
+  transition: border-color 0.15s, background 0.15s;
+}
+.input::placeholder { color: var(--text-3); }
+.input:focus {
+  outline: none;
+  border-color: rgba(123,110,255,0.6);
+  background: rgba(123,110,255,0.06);
+}
+
+.primaryBtn {
   width: 100%; padding: 15px 24px;
   border-radius: var(--r-lg);
-  background: #fff; color: #1a1a1a;
-  font-size: 1rem; font-weight: 600; font-family: var(--font);
+  background: linear-gradient(135deg, #7B6EFF, #4FACFE);
+  color: #fff; font-size: 1rem; font-weight: 600; font-family: var(--font);
   transition: opacity 0.15s, transform 0.15s;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 20px rgba(123,110,255,0.35);
   margin-top: 4px;
 }
-.googleBtn:hover { opacity: 0.92; }
-.googleBtn:active { transform: scale(0.97); }
+.primaryBtn:hover { opacity: 0.92; }
+.primaryBtn:active { transform: scale(0.97); }
+.primaryBtn:disabled { opacity: 0.6; }
+
+.linkBtn {
+  background: none; border: none;
+  color: var(--text-2); font-size: 0.85rem; font-family: var(--font);
+  padding: 6px; cursor: pointer;
+}
+.linkBtn:hover { color: var(--text); }
+
+.error {
+  width: 100%; padding: 10px 14px; border-radius: var(--r-lg);
+  background: rgba(255,69,69,0.12); border: 1px solid rgba(255,69,69,0.3);
+  color: #ff8a8a; font-size: 0.85rem; text-align: center;
+}
+.info {
+  width: 100%; padding: 10px 14px; border-radius: var(--r-lg);
+  background: rgba(79,172,254,0.12); border: 1px solid rgba(79,172,254,0.3);
+  color: #8ecbff; font-size: 0.85rem; text-align: center;
+}
 
 .hint {
-  font-size: 0.75rem; color: var(--text-3);
-  text-align: center; line-height: 1.6;
+  font-size: 0.8rem; color: var(--text-3);
+  text-align: center; line-height: 1.7;
 }
