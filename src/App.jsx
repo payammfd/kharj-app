@@ -26,12 +26,8 @@ const Spinner = () => (
 export default function App() {
   const [state, setState] = useState({
     status: 'loading',
-    user: null,
-    allPlans: [],
-    plan: null,
-    members: [],
-    cards: [],
-    today: todayJalali(),
+    user: null, allPlans: [], plan: null,
+    members: [], cards: [], today: todayJalali(),
   })
   const [tab, setTab] = useState('home')
   const [showAddTx, setShowAddTx] = useState(false)
@@ -58,40 +54,47 @@ export default function App() {
     try {
       const { data, error } = await supabase
         .from('plan_members')
-        .select('plan_id, display_name, plans(*)')
+        .select('plan_id, plans(*)')
         .eq('user_id', session.user.id)
-      if (error) throw error
-      const plans = (data||[]).map(m=>m.plans).filter(Boolean)
+
+      if (error) {
+        console.error('plan_members query error:', error)
+        setState(s => ({...s, status:'noplan', user:session.user}))
+        return
+      }
+
+      const plans = (data||[]).map(m => m.plans).filter(Boolean)
+
       if (plans.length === 0) {
         setState(s => ({...s, status:'noplan', user:session.user, allPlans:[], plan:null}))
       } else if (plans.length === 1) {
-        const [members, cards] = await Promise.all([loadMembers(plans[0].id), loadCards(plans[0].id)])
+        const [members, cards] = await Promise.all([
+          loadMembers(plans[0].id),
+          loadCards(plans[0].id)
+        ])
         setState(s => ({...s, status:'ready', user:session.user, allPlans:plans, plan:plans[0], members, cards}))
       } else {
         setState(s => ({...s, status:'multiplan', user:session.user, allPlans:plans, plan:null}))
       }
     } catch(e) {
-      console.error('loadPlans:', e)
+      console.error('loadPlans error:', e)
       setState(s => ({...s, status:'noplan', user:session.user}))
     }
   }, [])
 
   useEffect(() => {
-    // Flag: did onAuthStateChange already handle the session?
     let handled = false
 
-    // 1. Listen FIRST — catches SIGNED_IN from OAuth hash
+    // 1. Subscribe to auth changes FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('[auth]', event, session?.user?.email)
+        console.log('[auth event]', event, session?.user?.email)
         handled = true
-
         if (event === 'SIGNED_OUT') {
           setState(s => ({...s, status:'loggedout', user:null, allPlans:[], plan:null}))
           return
         }
         if (session?.user) {
-          // Clean hash from URL
           if (window.location.hash) {
             window.history.replaceState(null, '', window.location.pathname)
           }
@@ -100,41 +103,48 @@ export default function App() {
       }
     )
 
-    // 2. Check existing session — but only if onAuthStateChange hasn't fired yet
-    // Give Supabase 300ms to process the hash before falling back to getSession
-    setTimeout(async () => {
-      if (handled) return // already handled by onAuthStateChange
+    // 2. After 500ms, if onAuthStateChange hasn't fired, check getSession
+    const timer = setTimeout(async () => {
+      if (handled) return
+      console.log('[getSession fallback]')
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user) {
         await loadPlans(session)
       } else {
         setState(s => ({...s, status:'loggedout'}))
       }
-    }, 300)
+    }, 500)
 
-    return () => subscription.unsubscribe()
+    // 3. Safety net — never stay in loading forever
+    const safetyTimer = setTimeout(() => {
+      setState(s => {
+        if (s.status === 'loading') {
+          console.log('[safety] forced loggedout')
+          return {...s, status:'loggedout'}
+        }
+        return s
+      })
+    }, 8000)
+
+    return () => {
+      subscription.unsubscribe()
+      clearTimeout(timer)
+      clearTimeout(safetyTimer)
+    }
   }, [loadPlans])
 
   const actions = {
     signInWithGoogle: async () => {
       await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: {
-          redirectTo: 'https://kharj-app.pages.dev/',
-          queryParams: { prompt: 'select_account' }
-        }
+        options: { redirectTo: 'https://kharj-app.pages.dev/', queryParams: { prompt: 'select_account' } }
       })
     },
-
-    signOut: async () => {
-      await supabase.auth.signOut()
-    },
-
+    signOut: async () => { await supabase.auth.signOut() },
     selectPlan: async (p) => {
       const [members, cards] = await Promise.all([loadMembers(p.id), loadCards(p.id)])
       setState(s => ({...s, status:'ready', plan:p, members, cards}))
     },
-
     createPlan: async (name, displayName) => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('لطفاً دوباره وارد شوید')
@@ -145,7 +155,6 @@ export default function App() {
       const [members, cards] = await Promise.all([loadMembers(newPlan.id), loadCards(newPlan.id)])
       setState(s => ({...s, status:'ready', allPlans:[...s.allPlans,newPlan], plan:newPlan, members, cards}))
     },
-
     joinPlan: async (inviteCode, displayName) => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('لطفاً دوباره وارد شوید')
@@ -162,7 +171,6 @@ export default function App() {
       const [members, cards] = await Promise.all([loadMembers(targetPlan.id), loadCards(targetPlan.id)])
       setState(s => ({...s, status:'ready', allPlans:[...s.allPlans.filter(p=>p.id!==targetPlan.id),targetPlan], plan:targetPlan, members, cards}))
     },
-
     updatePlan: async (updates) => {
       const { data, error } = await supabase.from('plans')
         .update(updates).eq('id', state.plan.id).select().single()
@@ -170,28 +178,24 @@ export default function App() {
       setState(s => ({...s, plan:data, allPlans:s.allPlans.map(p=>p.id===data.id?data:p)}))
       return data
     },
-
     addCard: async (cardData) => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('لطفاً دوباره وارد شوید')
       const { data, error } = await supabase.from('bank_cards')
-        .insert({...cardData, plan_id:state.plan.id, user_id:session.user.id}).select().single()
+        .insert({...cardData,plan_id:state.plan.id,user_id:session.user.id}).select().single()
       if (error) throw error
-      setState(s => ({...s, cards:[...s.cards, data]}))
+      setState(s => ({...s, cards:[...s.cards,data]}))
       return data
     },
-
     deleteCard: async (cardId) => {
-      await supabase.from('bank_cards').delete().eq('id', cardId)
+      await supabase.from('bank_cards').delete().eq('id',cardId)
       setState(s => ({...s, cards:s.cards.filter(c=>c.id!==cardId)}))
     },
-
     reloadCards: async () => {
       if (!state.plan) return
       const cards = await loadCards(state.plan.id)
       setState(s => ({...s, cards}))
     },
-
     reloadMembers: async () => {
       if (!state.plan) return
       const members = await loadMembers(state.plan.id)
