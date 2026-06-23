@@ -8,14 +8,17 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // First check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
+    // Listen to auth changes FIRST before getSession
+    // This ensures we catch the SIGNED_IN event from OAuth redirect
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setUser(session?.user ?? null)
+        setLoading(false)
+      }
+    )
 
-    // Listen for auth changes (including OAuth redirects)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    // Also check existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       setLoading(false)
     })
@@ -27,30 +30,22 @@ export function AuthProvider({ children }) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: 'https://payammfd.github.io/kharj-app/',
+        redirectTo: 'https://kharj-app.pages.dev/',
         queryParams: { prompt: 'select_account' }
       }
     })
     if (error) throw error
   }
 
-  const signInWithMagicLink = async (email) => {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: 'https://payammfd.github.io/kharj-app/' }
-    })
-    if (error) throw error
+  const signOut = async () => {
+    await supabase.auth.signOut()
   }
 
-  const signOut = () => supabase.auth.signOut()
-
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithMagicLink, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   )
 }
 
-export function useAuth() {
-  return useContext(AuthContext)
-}
+export function useAuth() { return useContext(AuthContext) }

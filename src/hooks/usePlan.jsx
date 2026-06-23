@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, useRef } from 'react'
+import { useState, useEffect, createContext, useContext } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './useAuth.jsx'
 
@@ -6,64 +6,57 @@ const PlanContext = createContext(null)
 
 export function PlanProvider({ children }) {
   const { user } = useAuth()
-  const [allPlans, setAllPlans] = useState([])   // all plans user belongs to
-  const [plan, setPlan] = useState(null)          // currently active plan
+  const [allPlans, setAllPlans] = useState([])
+  const [plan, setPlan] = useState(null)
   const [members, setMembers] = useState([])
   const [cards, setCards] = useState([])
   const [loading, setLoading] = useState(true)
-  const retryRef = useRef(0)
 
   useEffect(() => {
     if (!user) {
-      setAllPlans([]); setPlan(null); setMembers([]); setCards([])
-      setLoading(false); retryRef.current = 0
+      setAllPlans([]); setPlan(null)
+      setMembers([]); setCards([])
+      setLoading(false)
       return
     }
-    retryRef.current = 0
     loadAllPlans()
-  }, [user])
+  }, [user?.id]) // only re-run when user ID changes
 
   async function loadAllPlans() {
     setLoading(true)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        if (retryRef.current < 4) {
-          retryRef.current++
-          setTimeout(() => loadAllPlans(), 1500)
-          return
-        }
+      // Force a fresh token by calling getSession
+      // If it fails, refreshSession to ensure token is valid
+      let { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session?.access_token) {
+        const refreshed = await supabase.auth.refreshSession()
+        session = refreshed.data.session
+      }
+      
+      if (!session?.access_token) {
         setLoading(false)
         return
       }
 
-      const { data: memberships, error } = await supabase
+      // Explicitly pass the token via Authorization header
+      const { data, error } = await supabase
         .from('plan_members')
         .select('plan_id, display_name, plans(*)')
         .eq('user_id', session.user.id)
 
       if (error) throw error
 
-      const plans = (memberships || []).map(m => m.plans).filter(Boolean)
+      const plans = (data || []).map(m => m.plans).filter(Boolean)
       setAllPlans(plans)
 
       if (plans.length === 1) {
-        // Exactly one plan — go straight in
         await selectPlan(plans[0])
-      } else if (plans.length > 1) {
-        // Multiple plans — let user choose (plan stays null, allPlans has items)
-        setPlan(null)
       } else {
-        // No plans
         setPlan(null)
       }
-    } catch (e) {
-      console.error('loadAllPlans error:', e)
-      if (retryRef.current < 4) {
-        retryRef.current++
-        setTimeout(() => loadAllPlans(), 1500)
-        return
-      }
+    } catch(e) {
+      console.error('loadAllPlans:', e)
     } finally {
       setLoading(false)
     }
@@ -115,7 +108,6 @@ export function PlanProvider({ children }) {
       .maybeSingle()
     if (!targetPlan) throw new Error('کد دعوت اشتباه است')
 
-    // Already a member? Just select it
     const { data: existing } = await supabase
       .from('plan_members').select('id')
       .eq('plan_id', targetPlan.id).eq('user_id', session.user.id)

@@ -13,25 +13,34 @@ import ProfilePage from './pages/ProfilePage'
 import BottomNav from './components/BottomNav'
 import AddTransactionSheet from './components/AddTransactionSheet'
 
-// ── Loading spinner ────────────────────────────────────────────
 const Spinner = () => (
   <div style={{
     minHeight:'100dvh', display:'flex', alignItems:'center',
     justifyContent:'center', background:'var(--bg)',
-    flexDirection:'column', gap:'16px'
+    flexDirection:'column', gap:'20px'
   }}>
     <div style={{
-      width:64, height:64, borderRadius:20,
+      width:68, height:68, borderRadius:22,
       background:'linear-gradient(135deg,#7B6EFF,#4FACFE)',
       display:'flex', alignItems:'center', justifyContent:'center',
-      fontSize:'2rem', fontWeight:700, color:'#fff',
-      boxShadow:'0 12px 40px rgba(123,110,255,0.35)'
+      fontSize:'2.2rem', fontWeight:700, color:'#fff',
+      boxShadow:'0 12px 40px rgba(123,110,255,0.4)'
     }}>خ</div>
-    <div style={{color:'rgba(255,255,255,0.15)',fontSize:'1.4rem',letterSpacing:'4px'}}>...</div>
+    <div style={{
+      display:'flex', gap:'6px', alignItems:'center'
+    }}>
+      {[0,1,2].map(i => (
+        <div key={i} style={{
+          width:6, height:6, borderRadius:'50%',
+          background:'rgba(123,110,255,0.6)',
+          animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite`
+        }}/>
+      ))}
+    </div>
+    <style>{`@keyframes pulse{0%,100%{opacity:0.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1)}}`}</style>
   </div>
 )
 
-// ── Main app flow ──────────────────────────────────────────────
 function AppInner() {
   const { user, loading: authLoading } = useAuth()
   const { allPlans, plan, cards, loading: planLoading } = usePlan()
@@ -48,13 +57,13 @@ function AppInner() {
   // 3. Plan loading
   if (planLoading) return <Spinner/>
 
-  // 4. Has multiple plans → Plan selector
+  // 4. Multiple plans → Plan selector
   if (allPlans.length > 1 && !plan) return <PlanSelect/>
 
-  // 5. No plan → Setup (new user or hasn't joined yet)
+  // 5. No plan → Setup
   if (!plan) return <Setup/>
 
-  // 6. Has plan → Main app
+  // 6. Main app
   return (
     <>
       {tab === 'home'    && <Dashboard onNavigate={setTab}/>}
@@ -62,11 +71,7 @@ function AppInner() {
       {tab === 'stats'   && <Stats/>}
       {tab === 'plan'    && <PlanPage/>}
       {tab === 'profile' && <ProfilePage/>}
-      <BottomNav
-        active={tab}
-        onNavigate={setTab}
-        onAddTx={() => setShowAddTx(true)}
-      />
+      <BottomNav active={tab} onNavigate={setTab} onAddTx={() => setShowAddTx(true)}/>
       {showAddTx && (
         <AddTransactionSheet
           plan={plan} user={user} today={today} cards={cards}
@@ -78,22 +83,26 @@ function AppInner() {
   )
 }
 
-// ── OAuth redirect handler ─────────────────────────────────────
+// Handle OAuth redirect — wait for Supabase to process the hash
 function OAuthHandler({ children }) {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
     const hash = window.location.hash
-    if (hash && hash.includes('access_token')) {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-        if (['SIGNED_IN','SIGNED_OUT','TOKEN_REFRESHED'].includes(event)) {
-          window.history.replaceState(null,'',window.location.pathname)
-          subscription.unsubscribe()
-          setReady(true)
-        }
+    const hasOAuthParams = hash && (
+      hash.includes('access_token') ||
+      hash.includes('error_description')
+    )
+
+    if (hasOAuthParams) {
+      // Wait for Supabase to process the token from URL hash
+      supabase.auth.onAuthStateChange((event, session) => {
+        // Clean URL immediately
+        window.history.replaceState(null, '', window.location.pathname)
+        setReady(true)
       })
-      // Fallback timeout
-      setTimeout(() => setReady(true), 4000)
+      // Safety timeout
+      setTimeout(() => setReady(true), 5000)
     } else {
       setReady(true)
     }
@@ -103,7 +112,6 @@ function OAuthHandler({ children }) {
   return children
 }
 
-// ── Root ───────────────────────────────────────────────────────
 export default function App() {
   return (
     <OAuthHandler>
