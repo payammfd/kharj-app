@@ -1,10 +1,17 @@
 import { createClient } from '@supabase/supabase-js'
 
-export const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY,
-  { auth: { persistSession: true, detectSessionInUrl: true, autoRefreshToken: true, storageKey: 'kharj-auth', flowType: 'implicit' } }
-)
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,
+    detectSessionInUrl: true,
+    autoRefreshToken: true,
+    storageKey: 'kharj-auth',
+    flowType: 'pkce',  // ← PKCE instead of implicit
+  }
+})
 
 export function toJalali(gy, gm, gd) {
   var g_y=gy-1600,g_m=gm-1,g_d=gd-1
@@ -31,15 +38,15 @@ export function toFa(n){return String(n).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'
 export function todayJalali(){const n=new Date();return toJalali(n.getFullYear(),n.getMonth()+1,n.getDate())}
 export function fmtAmount(n){
   if(!n&&n!==0)return '۰ تومان'
-  return toFa(n.toLocaleString('fa-IR'))+ ' تومان'
+  return toFa(n.toLocaleString('fa-IR'))+' تومان'
 }
-export const BANKS = {
-  melat:   { label:'ملت',     gradient:'linear-gradient(135deg,#1a0533,#3d1278,#6B21A8)', text:'MELAT' },
-  melli:   { label:'ملی',     gradient:'linear-gradient(135deg,#003d1a,#006B2E,#00A550)', text:'MELLI' },
-  saderat: { label:'صادرات',  gradient:'linear-gradient(135deg,#1a0000,#8B0000,#CC0000)', text:'SADERAT' },
-  tejarat: { label:'تجارت',   gradient:'linear-gradient(135deg,#002244,#003580,#0052B4)', text:'TEJARAT' },
-  parsian: { label:'پارسیان', gradient:'linear-gradient(135deg,#001a33,#004080,#0070CC)', text:'PARSIAN' },
-  refah:   { label:'رفاه',    gradient:'linear-gradient(135deg,#0a2a00,#1a5c00,#2E8B00)', text:'REFAH' },
-  ayandeh: { label:'آینده',   gradient:'linear-gradient(135deg,#1a1500,#4a3a00,#8B6914)', text:'AYANDEH' },
-  default: { label:'سایر',    gradient:'linear-gradient(135deg,#1a1a3e,#2d2d6e,#4B4BA8)', text:'BANK' },
+export const BANKS={
+  melat:  {label:'ملت',    gradient:'linear-gradient(135deg,#1a0533,#3d1278,#6B21A8)',text:'MELAT'},
+  melli:  {label:'ملی',    gradient:'linear-gradient(135deg,#003d1a,#006B2E,#00A550)',text:'MELLI'},
+  saderat:{label:'صادرات', gradient:'linear-gradient(135deg,#1a0000,#8B0000,#CC0000)',text:'SADERAT'},
+  tejarat:{label:'تجارت',  gradient:'linear-gradient(135deg,#002244,#003580,#0052B4)',text:'TEJARAT'},
+  parsian:{label:'پارسیان',gradient:'linear-gradient(135deg,#001a33,#004080,#0070CC)',text:'PARSIAN'},
+  refah:  {label:'رفاه',   gradient:'linear-gradient(135deg,#0a2a00,#1a5c00,#2E8B00)',text:'REFAH'},
+  ayandeh:{label:'آینده',  gradient:'linear-gradient(135deg,#1a1500,#4a3a00,#8B6914)',text:'AYANDEH'},
+  default:{label:'سایر',   gradient:'linear-gradient(135deg,#1a1a3e,#2d2d6e,#4B4BA8)',text:'BANK'},
 }

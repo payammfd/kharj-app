@@ -56,55 +56,45 @@ export default function App() {
         .from('plan_members')
         .select('plan_id, plans(*)')
         .eq('user_id', session.user.id)
-
       if (error) throw error
-
-      const plans = (data || []).map(m => m.plans).filter(Boolean)
-
+      const plans = (data||[]).map(m=>m.plans).filter(Boolean)
       if (plans.length === 0) {
         setState(s => ({...s, status:'noplan', user:session.user, allPlans:[], plan:null}))
       } else if (plans.length === 1) {
-        const [members, cards] = await Promise.all([
-          loadMembers(plans[0].id),
-          loadCards(plans[0].id)
-        ])
+        const [members, cards] = await Promise.all([loadMembers(plans[0].id), loadCards(plans[0].id)])
         setState(s => ({...s, status:'ready', user:session.user, allPlans:plans, plan:plans[0], members, cards}))
       } else {
         setState(s => ({...s, status:'multiplan', user:session.user, allPlans:plans, plan:null}))
       }
     } catch(e) {
-      console.error('loadPlans:', e)
+      console.error('loadPlans error:', e)
       setState(s => ({...s, status:'noplan', user:session.user}))
     }
   }, [])
 
   useEffect(() => {
-    // تنها منبع حقیقت: onAuthStateChange
-    // Supabase این event رو بعد از پردازش hash هم fire می‌کنه
-    // پس نیازی به هیچ timeout یا fallback نیست
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('[auth]', event, session?.user?.email)
 
-        // پاک کردن hash بعد از OAuth redirect
-        if (window.location.hash?.includes('access_token')) {
+        // با PKCE، code در query param هست - بعد از exchange، URL رو پاک کن
+        if (window.location.search?.includes('code=')) {
           window.history.replaceState(null, '', window.location.pathname)
         }
 
-        if (event === 'SIGNED_OUT' || !session) {
+        if (event === 'SIGNED_OUT' || (!session && event !== 'INITIAL_SESSION')) {
           setState(s => ({...s, status:'loggedout', user:null, allPlans:[], plan:null}))
           return
         }
 
-        // INITIAL_SESSION: session موجود در localStorage
-        // SIGNED_IN: بعد از OAuth یا login
-        // TOKEN_REFRESHED: رفرش خودکار توکن
-        if (['INITIAL_SESSION', 'SIGNED_IN', 'TOKEN_REFRESHED'].includes(event)) {
+        if (session?.user) {
           await loadPlans(session)
+        } else if (event === 'INITIAL_SESSION') {
+          // No session on startup
+          setState(s => ({...s, status:'loggedout'}))
         }
       }
     )
-
     return () => subscription.unsubscribe()
   }, [loadPlans])
 
@@ -129,9 +119,7 @@ export default function App() {
       const { data: newPlan, error } = await supabase.from('plans')
         .insert({name:name||'خانه ما', created_by:session.user.id}).select().single()
       if (error) throw error
-      await supabase.from('plan_members').insert({
-        plan_id:newPlan.id, user_id:session.user.id, display_name:displayName
-      })
+      await supabase.from('plan_members').insert({plan_id:newPlan.id, user_id:session.user.id, display_name:displayName})
       const [members, cards] = await Promise.all([loadMembers(newPlan.id), loadCards(newPlan.id)])
       setState(s => ({...s, status:'ready', allPlans:[...s.allPlans,newPlan], plan:newPlan, members, cards}))
     },
@@ -166,11 +154,11 @@ export default function App() {
       const { data, error } = await supabase.from('bank_cards')
         .insert({...cardData, plan_id:state.plan.id, user_id:session.user.id}).select().single()
       if (error) throw error
-      setState(s => ({...s, cards:[...s.cards, data]}))
+      setState(s => ({...s, cards:[...s.cards,data]}))
       return data
     },
     deleteCard: async (cardId) => {
-      await supabase.from('bank_cards').delete().eq('id', cardId)
+      await supabase.from('bank_cards').delete().eq('id',cardId)
       setState(s => ({...s, cards:s.cards.filter(c=>c.id!==cardId)}))
     },
     reloadCards: async () => {
