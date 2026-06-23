@@ -30,7 +30,7 @@ export function AuthProvider({ children }) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: 'https://kharj-app.pages.dev/',
+        redirectTo: window.location.origin + '/',
         queryParams: { prompt: 'select_account' }
       }
     })

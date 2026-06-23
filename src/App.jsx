@@ -77,8 +77,15 @@ export default function App() {
       async (event, session) => {
         console.log('[auth]', event, session?.user?.email)
 
+        // اگه provider خطا برگردونه (مثلاً access_denied)، تو URL میاد - نشونش بده
+        const params = new URLSearchParams(window.location.search)
+        if (params.get('error')) {
+          console.error('[auth] OAuth redirect error:', params.get('error'), params.get('error_description'))
+          alert('خطا در ورود با Google: ' + (params.get('error_description') || params.get('error')))
+        }
+
         // با PKCE، code در query param هست - بعد از exchange، URL رو پاک کن
-        if (window.location.search?.includes('code=')) {
+        if (window.location.search?.includes('code=') || params.get('error')) {
           window.history.replaceState(null, '', window.location.pathname)
         }
 
@@ -100,13 +107,16 @@ export default function App() {
 
   const actions = {
     signInWithGoogle: async () => {
-      await supabase.auth.signInWithOAuth({
+      // redirectTo باید همون origin فعلی باشه (localhost موقع تست، pages.dev در production)
+      // وگرنه با PKCE، code_verifier در localStorage یه origin دیگه می‌مونه و exchange شکست می‌خوره
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'https://kharj-app.pages.dev/',
+          redirectTo: window.location.origin + '/',
           queryParams: { prompt: 'select_account' }
         }
       })
+      if (error) { console.error('[auth] signInWithOAuth error:', error); alert('خطا در ورود: ' + error.message) }
     },
     signOut: async () => { await supabase.auth.signOut() },
     selectPlan: async (p) => {
