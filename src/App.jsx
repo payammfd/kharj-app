@@ -31,6 +31,7 @@ export default function App() {
   })
   const [tab, setTab] = useState('home')
   const [showAddTx, setShowAddTx] = useState(false)
+  const [txRefresh, setTxRefresh] = useState(0)
 
   async function loadMembers(planId) {
     const { data } = await supabase
@@ -223,7 +224,7 @@ export default function App() {
 
   return (
     <>
-      {tab==='home'    && <Dashboard user={user} plan={plan} members={members} cards={cards} today={today} actions={actions} onNavigate={setTab}/>}
+      {tab==='home'    && <Dashboard user={user} plan={plan} members={members} cards={cards} today={today} actions={actions} onNavigate={setTab} txRefresh={txRefresh}/>}
       {tab==='cards'   && <Cards plan={plan} cards={cards} actions={actions}/>}
       {tab==='stats'   && <Stats plan={plan}/>}
       {tab==='plan'    && <PlanPage user={user} plan={plan} members={members} actions={actions}/>}
@@ -231,7 +232,7 @@ export default function App() {
       <BottomNav active={tab} onNavigate={setTab} onAddTx={()=>setShowAddTx(true)}/>
       {showAddTx && (
         <AddTransactionSheet plan={plan} user={user} today={today} cards={cards}
-          onClose={()=>setShowAddTx(false)} onAdded={()=>setShowAddTx(false)}/>
+          onClose={()=>setShowAddTx(false)} onAdded={()=>{setShowAddTx(false);setTxRefresh(n=>n+1)}}/>
       )}
     </>
   )

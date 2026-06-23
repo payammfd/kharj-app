@@ -19,7 +19,7 @@ const CAT_COLORS = {
   'درآمد':{'bg':'rgba(52,211,154,0.15)','c':'#34D39A'},
 }
 
-export default function Dashboard({ user, plan, members, cards, today, actions, onNavigate }) {
+export default function Dashboard({ user, plan, members, cards, today, actions, onNavigate, txRefresh }) {
   const [vm, setVm] = useState({ jy: today[0], jm: today[1] })
   const [txs, setTxs] = useState([])
   const [loading, setLoading] = useState(true)
@@ -37,7 +37,7 @@ export default function Dashboard({ user, plan, members, cards, today, actions, 
     setLoading(false)
   }, [plan, vm])
 
-  useEffect(()=>{ loadTxs() },[loadTxs])
+  useEffect(()=>{ loadTxs() },[loadTxs, txRefresh])
 
   const income = txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0)
   const expense = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0)
