@@ -7,6 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: false, // ثبت SW رو دستی تو main.jsx انجام می‌دیم تا روی آپدیت، صفحه auto-reload بشه
       manifest: {
         name: 'خرج - مدیریت هزینه خانواده',
         short_name: 'خرج',
