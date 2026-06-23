@@ -9,6 +9,12 @@ export default function ProfilePage({ user, plan, members, actions }) {
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const fileRef = useRef()
+  // تغییر رمز عبور
+  const [pw1, setPw1] = useState('')
+  const [pw2, setPw2] = useState('')
+  const [pwLoading, setPwLoading] = useState(false)
+  const [pwMsg, setPwMsg] = useState('')
+  const [pwErr, setPwErr] = useState('')
 
   async function handleSave(){
     setLoading(true)
@@ -17,6 +23,21 @@ export default function ProfilePage({ user, plan, members, actions }) {
       await supabase.auth.updateUser({data:{full_name:displayName.trim()}})
       setSaved(true); setTimeout(()=>setSaved(false),2000)
     }catch(e){console.error(e)}finally{setLoading(false)}
+  }
+
+  async function handleChangePassword(){
+    setPwErr(''); setPwMsg('')
+    if(pw1.length<6) return setPwErr('رمز باید حداقل ۶ کاراکتر باشد')
+    if(pw1!==pw2) return setPwErr('رمزها یکسان نیستند')
+    setPwLoading(true)
+    try {
+      const { error } = await supabase.auth.updateUser({ password: pw1 })
+      if(error) throw error
+      setPw1(''); setPw2('')
+      setPwMsg('رمز عبور تغییر کرد ✓'); setTimeout(()=>setPwMsg(''),2500)
+    }catch(e){
+      setPwErr(e.message?.toLowerCase().includes('same') ? 'رمز جدید با رمز فعلی یکیه' : (e.message||'خطا در تغییر رمز'))
+    }finally{setPwLoading(false)}
   }
 
   async function handleAvatar(e){
@@ -47,6 +68,18 @@ export default function ProfilePage({ user, plan, members, actions }) {
         <div className={s.field}><label className={s.lbl}>ایمیل</label><input value={user?.email||''} disabled style={{opacity:0.5}}/></div>
       </div>
       <button className={s.saveBtn} onClick={handleSave} disabled={loading}>{loading?'...':saved?'✓ ذخیره شد':'ذخیره'}</button>
+
+      <div className={s.section}>
+        <div className={s.sectionTitle}>تغییر رمز عبور</div>
+        {pwErr&&<div className={s.msgErr}>{pwErr}</div>}
+        {pwMsg&&<div className={s.msgOk}>{pwMsg}</div>}
+        <div className={s.fields}>
+          <div className={s.field}><label className={s.lbl}>رمز جدید</label><input type="password" value={pw1} onChange={e=>setPw1(e.target.value)} placeholder="حداقل ۶ کاراکتر" dir="ltr"/></div>
+          <div className={s.field}><label className={s.lbl}>تکرار رمز جدید</label><input type="password" value={pw2} onChange={e=>setPw2(e.target.value)} placeholder="دوباره وارد کن" dir="ltr"/></div>
+        </div>
+        <button className={s.pwBtn} onClick={handleChangePassword} disabled={pwLoading||!pw1||!pw2}>{pwLoading?'...':'تغییر رمز'}</button>
+      </div>
+
       <button className={s.signOutBtn} onClick={actions.signOut}>خروج از حساب</button>
     </div>
   )
