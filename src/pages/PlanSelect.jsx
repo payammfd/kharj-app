@@ -1,11 +1,6 @@
-import { usePlan } from '../hooks/usePlan.jsx'
-import { useAuth } from '../hooks/useAuth.jsx'
 import s from './PlanSelect.module.css'
 
-export default function PlanSelect() {
-  const { allPlans, selectPlan } = usePlan()
-  const { user } = useAuth()
-
+export default function PlanSelect({ user, allPlans, actions }) {
   return (
     <div className={s.wrap}>
       <div className={s.glow}/>
@@ -13,15 +8,11 @@ export default function PlanSelect() {
         <div className={s.logo}>خ</div>
         <h1 className={s.title}>کدوم پلن؟</h1>
         <p className={s.sub}>چند پلن داری، یکی رو انتخاب کن</p>
-
         <div className={s.list}>
           {allPlans.map(p => (
-            <button key={p.id} className={s.planCard} onClick={() => selectPlan(p)}>
+            <button key={p.id} className={s.planCard} onClick={()=>actions.selectPlan(p)}>
               <div className={s.planAvatar}>
-                {p.avatar_url
-                  ? <img src={p.avatar_url} alt="" className={s.planImg}/>
-                  : <span>🏠</span>
-                }
+                {p.avatar_url?<img src={p.avatar_url} alt="" className={s.planImg}/>:<span>🏠</span>}
               </div>
               <div className={s.planInfo}>
                 <div className={s.planName}>{p.name}</div>
@@ -31,7 +22,6 @@ export default function PlanSelect() {
             </button>
           ))}
         </div>
-
         <p className={s.email}>{user?.email}</p>
       </div>
     </div>
