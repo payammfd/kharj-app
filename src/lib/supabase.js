@@ -41,15 +41,15 @@ export function fmtAmount(n){
   return toFa(n.toLocaleString('fa-IR'))+' تومان'
 }
 export const BANKS={
-  melat:  {label:'ملت',    gradient:'linear-gradient(135deg,#1a0533,#3d1278,#6B21A8)',text:'MELAT'},
-  melli:  {label:'ملی',    gradient:'linear-gradient(135deg,#003d1a,#006B2E,#00A550)',text:'MELLI'},
-  saderat:{label:'صادرات', gradient:'linear-gradient(135deg,#1a0000,#8B0000,#CC0000)',text:'SADERAT'},
-  tejarat:{label:'تجارت',  gradient:'linear-gradient(135deg,#002244,#003580,#0052B4)',text:'TEJARAT'},
-  parsian:{label:'پارسیان',gradient:'linear-gradient(135deg,#001a33,#004080,#0070CC)',text:'PARSIAN'},
-  refah:  {label:'رفاه',   gradient:'linear-gradient(135deg,#0a2a00,#1a5c00,#2E8B00)',text:'REFAH'},
-  ayandeh:{label:'آینده',  gradient:'linear-gradient(135deg,#1a1500,#4a3a00,#8B6914)',text:'AYANDEH'},
-  blu:    {label:'بلوبانک',gradient:'linear-gradient(135deg,#001a2e,#0353a4,#21B6E8)',text:'BLU'},
-  saman:  {label:'سامان',  gradient:'linear-gradient(135deg,#0a1226,#15307a,#2E6BE6)',text:'SAMAN'},
-  karafarin:{label:'کارآفرین',gradient:'linear-gradient(135deg,#04231a,#0b6e4f,#13C08A)',text:'KARAFARIN'},
+  melat:  {label:'ملت',    gradient:'linear-gradient(135deg,#1a0533,#3d1278,#6B21A8)',text:'MELAT',logo:'/banks/melat.svg'},
+  melli:  {label:'ملی',    gradient:'linear-gradient(135deg,#003d1a,#006B2E,#00A550)',text:'MELLI',logo:'/banks/melli.svg'},
+  saderat:{label:'صادرات', gradient:'linear-gradient(135deg,#1a0000,#8B0000,#CC0000)',text:'SADERAT',logo:'/banks/saderat.svg'},
+  tejarat:{label:'تجارت',  gradient:'linear-gradient(135deg,#002244,#003580,#0052B4)',text:'TEJARAT',logo:'/banks/tejarat.svg'},
+  parsian:{label:'پارسیان',gradient:'linear-gradient(135deg,#001a33,#004080,#0070CC)',text:'PARSIAN',logo:'/banks/parsian.svg'},
+  refah:  {label:'رفاه',   gradient:'linear-gradient(135deg,#0a2a00,#1a5c00,#2E8B00)',text:'REFAH',logo:'/banks/refah.svg'},
+  ayandeh:{label:'آینده',  gradient:'linear-gradient(135deg,#1a1500,#4a3a00,#8B6914)',text:'AYANDEH',logo:'/banks/ayandeh.svg'},
+  blu:    {label:'بلوبانک',gradient:'linear-gradient(135deg,#001a2e,#0353a4,#21B6E8)',text:'BLU',logo:'/banks/blu.svg'},
+  saman:  {label:'سامان',  gradient:'linear-gradient(135deg,#0a1226,#15307a,#2E6BE6)',text:'SAMAN',logo:'/banks/saman.svg'},
+  karafarin:{label:'کارآفرین',gradient:'linear-gradient(135deg,#04231a,#0b6e4f,#13C08A)',text:'KARAFARIN',logo:'/banks/karafarin.svg'},
   default:{label:'سایر',   gradient:'linear-gradient(135deg,#1a1a3e,#2d2d6e,#4B4BA8)',text:'BANK'},
 }

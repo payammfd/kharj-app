@@ -15,7 +15,9 @@ export default function BankCard({ card, active = false, onClick }) {
     >
       <div className={styles.top}>
         <div className={styles.chip} />
-        <div className={styles.bankName}>{bank.text}</div>
+        {bank.logo
+          ? <div className={styles.logoBadge}><img src={bank.logo} alt={bank.label} className={styles.logoImg} loading="lazy"/></div>
+          : <div className={styles.bankName}>{bank.text}</div>}
       </div>
       <div className={styles.number}>{maskedNum}</div>
       <div className={styles.bottom}>
