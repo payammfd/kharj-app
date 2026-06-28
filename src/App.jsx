@@ -199,9 +199,32 @@ export default function App() {
       setState(s => ({...s, cards:[...s.cards,data]}))
       return data
     },
+    updateCard: async (cardId, updates) => {
+      const { data, error } = await supabase.from('bank_cards')
+        .update(updates).eq('id',cardId).select().single()
+      if (error) throw error
+      setState(s => ({...s, cards:s.cards.map(c=>c.id===cardId?data:c)}))
+      return data
+    },
     deleteCard: async (cardId) => {
       await supabase.from('bank_cards').delete().eq('id',cardId)
       setState(s => ({...s, cards:s.cards.filter(c=>c.id!==cardId)}))
+    },
+    // جابجایی موجودی بین دو کارت — فقط مانده‌ها رو تغییر می‌ده، تراکنش درآمد/هزینه ثبت نمی‌شه
+    transferBetweenCards: async (fromId, toId, amount) => {
+      const amt = parseInt(amount) || 0
+      if (!fromId || !toId || fromId === toId) throw new Error('دو کارت متفاوت انتخاب کن')
+      if (amt <= 0) throw new Error('مبلغ معتبر وارد کن')
+      const from = state.cards.find(c=>c.id===fromId)
+      const to = state.cards.find(c=>c.id===toId)
+      if (!from || !to) throw new Error('کارت پیدا نشد')
+      if ((from.balance||0) < amt) throw new Error('موجودی کارت مبدأ کافی نیست')
+      const [{ data: f, error: e1 }, { data: t, error: e2 }] = await Promise.all([
+        supabase.from('bank_cards').update({balance:(from.balance||0)-amt}).eq('id',fromId).select().single(),
+        supabase.from('bank_cards').update({balance:(to.balance||0)+amt}).eq('id',toId).select().single(),
+      ])
+      if (e1 || e2) throw new Error((e1||e2).message)
+      setState(s => ({...s, cards:s.cards.map(c=>c.id===fromId?f:c.id===toId?t:c)}))
     },
     reloadCards: async () => {
       if (!state.plan) return

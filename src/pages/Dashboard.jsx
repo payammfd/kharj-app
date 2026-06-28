@@ -26,6 +26,7 @@ export default function Dashboard({ user, plan, members, cards, today, actions, 
   const [activeCard, setActiveCard] = useState(0)
   const [showAddTx, setShowAddTx] = useState(false)
   const [showAddCard, setShowAddCard] = useState(false)
+  const [editTx, setEditTx] = useState(null)
 
   const loadTxs = useCallback(async () => {
     if (!plan) return
@@ -168,9 +169,14 @@ export default function Dashboard({ user, plan, members, cards, today, actions, 
                   {t.type==='expense'?'−':'+'}&#x200F;{fmtAmount(t.amount)}
                 </div>
                 {t.user_id===user?.id&&(
-                  <button className={s.delBtn} onClick={()=>deleteTx(t.id)}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                  </button>
+                  <div className={s.txActions}>
+                    <button className={s.editBtn} onClick={()=>setEditTx(t)}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
+                    </button>
+                    <button className={s.delBtn} onClick={()=>deleteTx(t.id)}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -179,6 +185,7 @@ export default function Dashboard({ user, plan, members, cards, today, actions, 
       </div>
 
       {showAddTx&&<AddTransactionSheet plan={plan} user={user} today={today} cards={cards} onClose={()=>setShowAddTx(false)} onAdded={()=>{setShowAddTx(false);loadTxs()}}/>}
+      {editTx&&<AddTransactionSheet plan={plan} user={user} today={today} cards={cards} editTx={editTx} onClose={()=>setEditTx(null)} onAdded={()=>{setEditTx(null);loadTxs()}}/>}
       {showAddCard&&<AddCardSheet actions={actions} onClose={()=>setShowAddCard(false)} onAdded={()=>{setShowAddCard(false);actions.reloadCards()}}/>}
     </div>
   )

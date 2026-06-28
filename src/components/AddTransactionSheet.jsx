@@ -6,19 +6,21 @@ import styles from './Forms.module.css'
 const CATS = ['خوراک','حمل و نقل','آب، برق، گاز','اینترنت','سلامت','پوشاک','تفریح','آموزش','سایر']
 const CAT_ICONS = {'خوراک':'🛒','حمل و نقل':'🚗','آب، برق، گاز':'💡','اینترنت':'📶','سلامت':'💊','پوشاک':'👕','تفریح':'🎮','آموزش':'📚','سایر':'📌'}
 
-export default function AddTransactionSheet({ plan, user, today, cards, onClose, onAdded }) {
-  const [type, setType] = useState('expense')
-  const [desc, setDesc] = useState('')
-  const [amount, setAmount] = useState('')
-  const [cat, setCat] = useState('خوراک')
-  const [cardId, setCardId] = useState('')
-  const [jy, setJy] = useState(today[0])
-  const [jm, setJm] = useState(today[1])
-  const [jd, setJd] = useState(today[2])
+export default function AddTransactionSheet({ plan, user, today, cards, editTx, onClose, onAdded }) {
+  const isEdit = !!editTx
+  const [type, setType] = useState(editTx?.type || 'expense')
+  const [desc, setDesc] = useState(editTx?.description || '')
+  const [amount, setAmount] = useState(editTx ? String(editTx.amount) : '')
+  const [cat, setCat] = useState(editTx && editTx.type === 'expense' ? editTx.category : 'خوراک')
+  const [cardId, setCardId] = useState(editTx?.card_id || '')
+  const [jy, setJy] = useState(editTx?.jy || today[0])
+  const [jm, setJm] = useState(editTx?.jm || today[1])
+  const [jd, setJd] = useState(editTx?.jd || today[2])
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
 
   const days = jm <= 6 ? 31 : jm <= 11 ? 30 : 29
+  const years = Array.from(new Set([1405, jy])).sort((a, b) => a - b)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -27,18 +29,20 @@ export default function AddTransactionSheet({ plan, user, today, cards, onClose,
     setLoading(true); setErr('')
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { setErr('لطفاً دوباره وارد شوید'); setLoading(false); return }
-    const { error } = await supabase.from('transactions').insert({
-      plan_id: plan.id, user_id: session.user.id,
+    const payload = {
       jy, jm, jd, description: desc.trim(), amount: num,
       type, category: type === 'income' ? 'درآمد' : cat,
       card_id: cardId || null
-    })
+    }
+    const { error } = isEdit
+      ? await supabase.from('transactions').update(payload).eq('id', editTx.id)
+      : await supabase.from('transactions').insert({ ...payload, plan_id: plan.id, user_id: session.user.id })
     if (error) { setErr(error.message); setLoading(false); return }
     onAdded()
   }
 
   return (
-    <BottomSheet title="تراکنش جدید" onClose={onClose}>
+    <BottomSheet title={isEdit ? 'ویرایش تراکنش' : 'تراکنش جدید'} onClose={onClose}>
       <form onSubmit={handleSubmit} style={{display:'flex',flexDirection:'column',gap:'14px'}}>
         {/* Type */}
         <div className={styles.typeRow}>
@@ -92,7 +96,7 @@ export default function AddTransactionSheet({ plan, user, today, cards, onClose,
           <label className={styles.lbl}>تاریخ</label>
           <div className={styles.dateRow}>
             <select value={jy} onChange={e=>setJy(parseInt(e.target.value))} style={{background:'var(--bg-el)',color:'var(--text)'}}>
-              <option value={1405}>{toFa(1405)}</option>
+              {years.map(y=><option key={y} value={y}>{toFa(y)}</option>)}
             </select>
             <select value={jm} onChange={e=>{setJm(parseInt(e.target.value));setJd(1)}} style={{background:'var(--bg-el)',color:'var(--text)'}}>
               {MONTHS.map((m,i)=><option key={i} value={i+1}>{m}</option>)}
@@ -105,7 +109,7 @@ export default function AddTransactionSheet({ plan, user, today, cards, onClose,
 
         {err && <p style={{color:'var(--red)',fontSize:'0.82rem',textAlign:'center'}}>{err}</p>}
         <button type="submit" className={styles.submitBtn} disabled={loading}>
-          {loading?'...':'ثبت تراکنش'}
+          {loading?'...':(isEdit?'ذخیره تغییرات':'ثبت تراکنش')}
         </button>
       </form>
     </BottomSheet>

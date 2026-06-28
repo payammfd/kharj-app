@@ -3,18 +3,19 @@ import { BANKS } from '../lib/supabase'
 import BottomSheet from './BottomSheet'
 import styles from './Forms.module.css'
 
-export default function AddCardSheet({ actions, onClose, onAdded }) {
-  const [bank, setBank] = useState('melat')
-  const [num, setNum] = useState('')
-  const [holder, setHolder] = useState('')
-  const [expiry, setExpiry] = useState('')
-  const [cvv, setCvv] = useState('')
-  const [balance, setBalance] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [err, setErr] = useState('')
-
+export default function AddCardSheet({ actions, editCard, onClose, onAdded }) {
+  const isEdit = !!editCard
   function fmtNum(val){let v=val.replace(/\D/g,'').substring(0,16);return v.replace(/(.{4})/g,'$1  ').trim()}
   function fmtExp(val){let v=val.replace(/\D/g,'');if(v.length>=2)v=v.substring(0,2)+'/'+v.substring(2,4);return v}
+
+  const [bank, setBank] = useState(editCard?.color_class || 'melat')
+  const [num, setNum] = useState(editCard?.card_number ? fmtNum(editCard.card_number) : '')
+  const [holder, setHolder] = useState(editCard?.card_holder || '')
+  const [expiry, setExpiry] = useState(editCard?.expiry || '')
+  const [cvv, setCvv] = useState('')
+  const [balance, setBalance] = useState(editCard ? String(editCard.balance ?? '') : '')
+  const [loading, setLoading] = useState(false)
+  const [err, setErr] = useState('')
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -22,18 +23,20 @@ export default function AddCardSheet({ actions, onClose, onAdded }) {
     if (cleanNum.length < 16) return setErr('شماره کارت ۱۶ رقم باشه')
     setLoading(true); setErr('')
     try {
-      await actions.addCard({
+      const cardData = {
         bank_name: BANKS[bank]?.label||'بانک',
         card_number: cleanNum, card_holder: holder.trim(),
         expiry, balance: parseInt(balance)||0, color_class: bank,
-      })
+      }
+      if (isEdit) await actions.updateCard(editCard.id, cardData)
+      else await actions.addCard(cardData)
       onAdded()
     } catch(e) { setErr(e.message) }
     finally { setLoading(false) }
   }
 
   return (
-    <BottomSheet title="افزودن کارت بانکی" onClose={onClose}>
+    <BottomSheet title={isEdit ? 'ویرایش کارت بانکی' : 'افزودن کارت بانکی'} onClose={onClose}>
       <form onSubmit={handleSubmit} style={{display:'flex',flexDirection:'column',gap:'12px'}}>
         <div className={styles.bankGrid}>
           {Object.entries(BANKS).map(([key,b])=>(
@@ -66,7 +69,7 @@ export default function AddCardSheet({ actions, onClose, onAdded }) {
           <input type="number" value={balance} onChange={e=>setBalance(e.target.value)} placeholder="مثلاً 18500000"/>
         </div>
         {err&&<p style={{color:'var(--red)',fontSize:'0.82rem',textAlign:'center'}}>{err}</p>}
-        <button type="submit" className={styles.submitBtn} disabled={loading}>{loading?'...':'افزودن کارت'}</button>
+        <button type="submit" className={styles.submitBtn} disabled={loading}>{loading?'...':(isEdit?'ذخیره تغییرات':'افزودن کارت')}</button>
       </form>
     </BottomSheet>
   )

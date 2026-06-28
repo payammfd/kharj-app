@@ -3,6 +3,23 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
 
+// جلوگیری از زوم روی موبایل (iOS Safari مقدار user-scalable=no توی meta رو نادیده می‌گیره)
+// ۱) جلوگیری از pinch-zoom با دو انگشت
+document.addEventListener('touchmove', (e) => {
+  if (e.touches.length > 1) e.preventDefault()
+}, { passive: false })
+// ۲) جلوگیری از zoom با double-tap
+let lastTouchEnd = 0
+document.addEventListener('touchend', (e) => {
+  const now = Date.now()
+  if (now - lastTouchEnd <= 300) e.preventDefault()
+  lastTouchEnd = now
+}, { passive: false })
+// ۳) جلوگیری از gesture-zoom مخصوص Safari
+for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) {
+  document.addEventListener(ev, (e) => e.preventDefault())
+}
+
 // ثبت Service Worker با auto-reload: وقتی نسخه جدید اپ deploy بشه،
 // به‌جای اینکه کاربر روی نسخه‌ی کش‌شده‌ی قدیمی گیر کنه، خودکار صفحه ری‌لود میشه.
 if (import.meta.env.PROD) {
