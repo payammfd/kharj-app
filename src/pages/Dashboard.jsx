@@ -19,7 +19,7 @@ const CAT_COLORS = {
   'درآمد':{'bg':'rgba(52,211,154,0.15)','c':'#34D39A'},
 }
 
-export default function Dashboard({ user, plan, members, cards, today, actions, onNavigate, onOpenStory, txRefresh }) {
+export default function Dashboard({ user, plan, members, cards, today, actions, onNavigate, onOpenStory, onOpenSearch, txRefresh }) {
   const [vm, setVm] = useState({ jy: today[0], jm: today[1] })
   const [txs, setTxs] = useState([])
   const [loading, setLoading] = useState(true)
@@ -73,12 +73,17 @@ export default function Dashboard({ user, plan, members, cards, today, actions, 
             <div className={s.planSub}>{members.length} عضو</div>
           </div>
         </button>
-        <div className={s.membersAvatars}>
-          {members.slice(0,3).map((m,i)=>(
-            <div key={m.user_id} style={{marginRight:i>0?'-8px':0,zIndex:members.length-i}}>
-              <MemberAvatar member={m} size={32}/>
-            </div>
-          ))}
+        <div className={s.headerRight}>
+          <button className={s.searchBtn} onClick={onOpenSearch} aria-label="جستجو">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4" strokeLinecap="round"/></svg>
+          </button>
+          <div className={s.membersAvatars}>
+            {members.slice(0,3).map((m,i)=>(
+              <div key={m.user_id} style={{marginRight:i>0?'-8px':0,zIndex:members.length-i}}>
+                <MemberAvatar member={m} size={32}/>
+              </div>
+            ))}
+          </div>
         </div>
       </header>
 
