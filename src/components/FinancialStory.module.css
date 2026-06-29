@@ -1,0 +1,70 @@
+.overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; color: #fff; direction: rtl; overflow: hidden;
+  padding: calc(var(--safe-t) + 70px) 28px calc(var(--safe-b) + 28px);
+  font-family: var(--font);
+  transition: background 0.4s ease;
+}
+
+/* نوارهای پیشرفت بالا */
+.bars {
+  position: absolute; top: calc(var(--safe-t) + 10px); left: 16px; right: 16px;
+  display: flex; gap: 5px; z-index: 5;
+}
+.barTrack {
+  flex: 1; height: 3px; border-radius: 3px;
+  background: rgba(255,255,255,0.28); overflow: hidden;
+}
+.barFill { height: 100%; width: 0; background: #fff; border-radius: 3px; }
+:global { @keyframes kharjStoryBar { from { width: 0% } to { width: 100% } } }
+
+.close {
+  position: absolute; top: calc(var(--safe-t) + 24px); left: 18px; z-index: 6;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(255,255,255,0.18); color: #fff; font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(8px);
+}
+
+/* محتوای اسلاید */
+.slide {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  animation: slideIn 0.5s cubic-bezier(0.22,1,0.36,1) both;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(18px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.emoji { font-size: 4.2rem; line-height: 1; margin-bottom: 10px; animation: pop 0.6s cubic-bezier(0.22,1.4,0.4,1) both; }
+@keyframes pop { from { transform: scale(0.3); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+
+.num { font-size: 2.7rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+.xl  { font-size: 2.4rem; font-weight: 700; }
+.lg  { font-size: 1.9rem; font-weight: 700; line-height: 1.35; }
+.md  { font-size: 1.15rem; font-weight: 500; }
+.sm  { font-size: 0.95rem; }
+
+.hint {
+  margin-top: 26px; font-size: 0.95rem; color: rgba(255,255,255,0.85);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100% { opacity: 0.5 } 50% { opacity: 1 } }
+
+.cta {
+  position: relative; z-index: 6;
+  margin-top: auto; width: 100%; max-width: 320px;
+  padding: 15px; border-radius: var(--r-lg);
+  background: rgba(255,255,255,0.22); color: #fff;
+  font-size: 1.05rem; font-weight: 600; font-family: var(--font);
+  backdrop-filter: blur(8px);
+}
+
+/* نواحی لمسی */
+.tapPrev, .tapNext { position: absolute; top: 0; bottom: 0; z-index: 4; }
+.tapPrev { right: 0; width: 32%; }
+.tapNext { left: 0; width: 68%; }
+
+.spinner { font-size: 2rem; color: rgba(255,255,255,0.6); }

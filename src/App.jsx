@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, todayJalali } from './lib/supabase'
 import Login from './pages/Login'
+import Onboarding from './pages/Onboarding'
 import Setup from './pages/Setup'
 import PlanSelect from './pages/PlanSelect'
 import Dashboard from './pages/Dashboard'
@@ -10,10 +11,20 @@ import PlanPage from './pages/PlanPage'
 import ProfilePage from './pages/ProfilePage'
 import BottomNav from './components/BottomNav'
 import AddTransactionSheet from './components/AddTransactionSheet'
+import FinancialStory from './components/FinancialStory'
+import { isNativeApp, setupNativeTabBar, setNativeActiveTab, setNativeTabBarHidden } from './native/nativeTabBar'
+
+// پل بین نوار شیشه‌ایِ نیتیو (Swift) و state ری‌اکت. روی iOS رندر می‌شه و خروجی DOM نداره.
+function NativeTabBarBridge({ active, hidden, onTab, onAdd }) {
+  useEffect(() => setupNativeTabBar({ onTab, onAdd }), [])
+  useEffect(() => { setNativeActiveTab(active) }, [active])
+  useEffect(() => { setNativeTabBarHidden(hidden) }, [hidden])
+  return null
+}
 
 const Spinner = () => (
   <div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bg)',flexDirection:'column',gap:'20px'}}>
-    <div style={{width:68,height:68,borderRadius:22,background:'linear-gradient(135deg,#7B6EFF,#4FACFE)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'2.2rem',fontWeight:700,color:'#fff',boxShadow:'0 12px 40px rgba(123,110,255,0.4)'}}>خ</div>
+    <img src="/logo.png" alt="خرج" style={{width:72,height:72,borderRadius:22,objectFit:'cover',boxShadow:'0 12px 40px rgba(123,110,255,0.4)'}}/>
     <div style={{display:'flex',gap:'6px'}}>
       {[0,1,2].map(i=>(
         <div key={i} style={{width:6,height:6,borderRadius:'50%',background:'rgba(123,110,255,0.5)',animation:`p 1.2s ease ${i*0.2}s infinite`}}/>
@@ -30,8 +41,14 @@ export default function App() {
     members: [], cards: [], today: todayJalali(),
   })
   const [tab, setTab] = useState('home')
+  const [onboarded, setOnboarded] = useState(() => {
+    try { return !!localStorage.getItem('kharj-onboarded') } catch { return false }
+  })
   const [showAddTx, setShowAddTx] = useState(false)
   const [txRefresh, setTxRefresh] = useState(0)
+  const [story, setStory] = useState(null) // {jy,jm} داستان مالی، یا null
+  const openAdd = useCallback(() => setShowAddTx(true), [])
+  const openStory = useCallback((jy, jm) => setStory({ jy, jm }), [])
 
   async function loadMembers(planId) {
     const { data } = await supabase
@@ -241,21 +258,34 @@ export default function App() {
   const { status, user, allPlans, plan, members, cards, today } = state
 
   if (status === 'loading')   return <Spinner/>
-  if (status === 'loggedout') return <Login actions={actions}/>
+  if (status === 'loggedout') {
+    if (!onboarded) {
+      return <Onboarding onStart={() => {
+        try { localStorage.setItem('kharj-onboarded', '1') } catch {}
+        setOnboarded(true)
+      }}/>
+    }
+    return <Login actions={actions}/>
+  }
   if (status === 'noplan')    return <Setup user={user} actions={actions}/>
   if (status === 'multiplan') return <PlanSelect user={user} allPlans={allPlans} actions={actions}/>
 
   return (
     <>
-      {tab==='home'    && <Dashboard user={user} plan={plan} members={members} cards={cards} today={today} actions={actions} onNavigate={setTab} txRefresh={txRefresh}/>}
+      {tab==='home'    && <Dashboard user={user} plan={plan} members={members} cards={cards} today={today} actions={actions} onNavigate={setTab} onOpenStory={openStory} txRefresh={txRefresh}/>}
       {tab==='cards'   && <Cards plan={plan} cards={cards} actions={actions}/>}
-      {tab==='stats'   && <Stats plan={plan}/>}
+      {tab==='stats'   && <Stats plan={plan} onOpenStory={openStory}/>}
       {tab==='plan'    && <PlanPage user={user} plan={plan} members={members} actions={actions}/>}
       {tab==='profile' && <ProfilePage user={user} plan={plan} members={members} actions={actions}/>}
-      <BottomNav active={tab} onNavigate={setTab} onAddTx={()=>setShowAddTx(true)}/>
+      {isNativeApp
+        ? <NativeTabBarBridge active={tab} hidden={showAddTx || !!story} onTab={setTab} onAdd={openAdd}/>
+        : <BottomNav active={tab} onNavigate={setTab} onAddTx={openAdd}/>}
       {showAddTx && (
         <AddTransactionSheet plan={plan} user={user} today={today} cards={cards}
           onClose={()=>setShowAddTx(false)} onAdded={()=>{setShowAddTx(false);setTxRefresh(n=>n+1)}}/>
+      )}
+      {story && (
+        <FinancialStory plan={plan} jy={story.jy} jm={story.jm} today={today} onClose={()=>setStory(null)}/>
       )}
     </>
   )

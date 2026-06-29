@@ -5,7 +5,7 @@ export default function PlanSelect({ user, allPlans, actions }) {
     <div className={s.wrap}>
       <div className={s.glow}/>
       <div className={s.content}>
-        <div className={s.logo}>خ</div>
+        <img src="/logo.png" className={s.logo} alt="خرج" />
         <h1 className={s.title}>کدوم پلن؟</h1>
         <p className={s.sub}>چند پلن داری، یکی رو انتخاب کن</p>
         <div className={s.list}>

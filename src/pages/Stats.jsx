@@ -4,7 +4,7 @@ import s from './Stats.module.css'
 
 const CHex={'خوراک':'#EF9F27','حمل و نقل':'#A89DFF','آب، برق، گاز':'#34D39A','اینترنت':'#7B6EFF','سلامت':'#FF8080','پوشاک':'#FF85B4','تفریح':'#FF9A6C','آموزش':'#6BBFFF','سایر':'#9090A0'}
 
-export default function Stats({ plan }) {
+export default function Stats({ plan, onOpenStory }) {
   const [today] = useState(()=>todayJalali())
   const [vm, setVm] = useState({jy:today[0],jm:today[1]})
   const [txs, setTxs] = useState([])
@@ -50,6 +50,15 @@ export default function Stats({ plan }) {
         <div className={s.totalCard} style={{borderColor:'rgba(52,211,154,0.2)'}}><div className={s.totalLbl}>درآمد</div><div className={s.totalVal} style={{color:'#34D39A'}}>+{fmtAmount(income)}</div></div>
         <div className={s.totalCard} style={{borderColor:'rgba(255,107,107,0.2)'}}><div className={s.totalLbl}>هزینه</div><div className={s.totalVal} style={{color:'#FF6B6B'}}>−{fmtAmount(totalExp)}</div></div>
       </div>
+      <button onClick={()=>onOpenStory(vm.jy, vm.jm)}
+        style={{margin:'0 20px 16px',padding:'13px 16px',borderRadius:16,
+          background:'linear-gradient(110deg,rgba(123,110,255,0.22),rgba(79,172,254,0.18))',
+          border:'1px solid rgba(123,110,255,0.3)',display:'flex',alignItems:'center',gap:10,
+          color:'#fff',fontFamily:'var(--font)',position:'relative',zIndex:2}}>
+        <span style={{fontSize:20}}>📖</span>
+        <span style={{flex:1,textAlign:'right',fontSize:14,fontWeight:600}}>داستان مالی {MONTHS[vm.jm-1]}</span>
+        <span style={{fontSize:20,color:'var(--accent)'}}>‹</span>
+      </button>
       <div className={s.viewToggle}>
         {[['donut','دایره‌ای'],['bar','میله‌ای'],['list','جدول']].map(([v,l])=>(
           <button key={v} className={`${s.viewBtn} ${view===v?s.viewActive:''}`} onClick={()=>setView(v)}>{l}</button>

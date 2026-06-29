@@ -13,10 +13,9 @@
   gap: 1rem; width: 100%; max-width: 360px; position: relative; z-index: 1;
 }
 .logo {
-  width: 60px; height: 60px; border-radius: 18px;
-  background: linear-gradient(135deg,#7B6EFF,#4FACFE);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.8rem; font-weight: 700; color: #fff;
+  width: 64px; height: 64px; border-radius: 18px;
+  object-fit: cover;
+  box-shadow: 0 10px 30px rgba(123,110,255,0.35);
 }
 .title { font-size: 1.8rem; font-weight: 700; margin-top: 4px; }
 .sub { font-size: 0.88rem; color: var(--text-2); font-weight: 300; margin-top: -4px; }

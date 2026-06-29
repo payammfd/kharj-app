@@ -25,6 +25,7 @@
   --r-xl: 24px;
   --font: 'Vazirmatn', system-ui, sans-serif;
   --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
   --nav-h: 64px;
 }
 
@@ -39,7 +40,9 @@ body {
   overflow-x: hidden;
   touch-action: pan-x pan-y;
 }
-#root { min-height: 100dvh; display: flex; flex-direction: column; }
+/* محتوا از زیر Dynamic Island / status bar شروع شه تا هدر پنهان نشه؛
+   اسکرول که بشه محتوا از زیر بلرِ بالا رد می‌شه (مثل اینستاگرام) */
+#root { min-height: 100dvh; display: flex; flex-direction: column; padding-top: var(--safe-t); }
 ::-webkit-scrollbar { width: 0; }
 button { font-family: var(--font); cursor: pointer; border: none; outline: none; transition: all 0.15s ease; -webkit-tap-highlight-color: transparent; }
 button:active { transform: scale(0.97); }

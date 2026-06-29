@@ -80,7 +80,7 @@ export default function Login({ actions }) {
     <div className={s.wrap}>
       <div className={s.glow1}/><div className={s.glow2}/>
       <div className={s.content}>
-        <div className={s.logo}>خ</div>
+        <img src="/logo.png" className={s.logo} alt="خرج" />
         <h1 className={s.appName}>خرج</h1>
         <p className={s.tagline}>دفتر هزینه مشترک خانواده</p>
 

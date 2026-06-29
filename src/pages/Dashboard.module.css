@@ -1,4 +1,16 @@
 .page { display:flex;flex-direction:column;min-height:100dvh;position:relative;overflow-x:hidden; }
+.storyBanner {
+  margin: 0 20px 16px; padding: 14px 16px; border-radius: 18px;
+  background: linear-gradient(110deg, rgba(123,110,255,0.22), rgba(79,172,254,0.18));
+  border: 1px solid rgba(123,110,255,0.3);
+  display: flex; align-items: center; gap: 12px; position: relative; z-index: 2;
+  width: calc(100% - 40px);
+}
+.storyEmoji { font-size: 22px; }
+.storyText { display: flex; flex-direction: column; gap: 2px; text-align: right; flex: 1; }
+.storyTitle { font-size: 14px; font-weight: 600; color: var(--text); }
+.storySub { font-size: 11px; color: var(--text-3); }
+.storyChevron { font-size: 22px; color: var(--accent); line-height: 1; }
 .page::after { content:'';display:block;flex:0 0 auto;height:calc(var(--nav-h) + var(--safe-b) + 24px); }
 .glow1 { position:fixed;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(107,91,255,0.15) 0%,transparent 70%);top:-80px;right:-80px;pointer-events:none;z-index:0; }
 .glow2 { position:fixed;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(79,172,254,0.08) 0%,transparent 70%);top:220px;left:-60px;pointer-events:none;z-index:0; }

@@ -19,7 +19,7 @@ const CAT_COLORS = {
   'درآمد':{'bg':'rgba(52,211,154,0.15)','c':'#34D39A'},
 }
 
-export default function Dashboard({ user, plan, members, cards, today, actions, onNavigate, txRefresh }) {
+export default function Dashboard({ user, plan, members, cards, today, actions, onNavigate, onOpenStory, txRefresh }) {
   const [vm, setVm] = useState({ jy: today[0], jm: today[1] })
   const [txs, setTxs] = useState([])
   const [loading, setLoading] = useState(true)
@@ -97,6 +97,15 @@ export default function Dashboard({ user, plan, members, cards, today, actions, 
           </div>
         </div>
       </div>
+
+      <button className={s.storyBanner} onClick={()=>onOpenStory(vm.jy, vm.jm)}>
+        <span className={s.storyEmoji}>📖</span>
+        <span className={s.storyText}>
+          <span className={s.storyTitle}>داستان مالی {MONTHS[vm.jm-1]}</span>
+          <span className={s.storySub}>ماهت رو مثل یه قصه ببین</span>
+        </span>
+        <span className={s.storyChevron}>‹</span>
+      </button>
 
       <div className={s.cardsSec}>
         <div className={s.secHeader}>

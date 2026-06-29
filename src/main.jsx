@@ -22,7 +22,10 @@ for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) {
 
 // ثبت Service Worker با auto-reload: وقتی نسخه جدید اپ deploy بشه،
 // به‌جای اینکه کاربر روی نسخه‌ی کش‌شده‌ی قدیمی گیر کنه، خودکار صفحه ری‌لود میشه.
-if (import.meta.env.PROD) {
+// داخل اپ نیتیو (Capacitor) SW رو ثبت نمی‌کنیم؛ چون فایل‌ها لوکال bundle شدن
+// و SW فقط باعث کش اضافی و رفتار ناخواسته توی WKWebView می‌شه.
+const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform?.())
+if (import.meta.env.PROD && !isNativeApp) {
   import('virtual:pwa-register').then(({ registerSW }) => {
     registerSW({ immediate: true })
   })
