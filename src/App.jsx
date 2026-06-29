@@ -36,6 +36,15 @@ const Spinner = () => (
   </div>
 )
 
+const LoadError = ({ onRetry }) => (
+  <div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bg)',flexDirection:'column',gap:'16px',padding:'24px',textAlign:'center'}}>
+    <div style={{fontSize:'2.4rem',opacity:0.5}}>⚠︎</div>
+    <div style={{color:'var(--text)',fontWeight:600,fontSize:'1.05rem'}}>اتصال برقرار نشد</div>
+    <div style={{color:'var(--text-3)',fontSize:'0.9rem',maxWidth:280,lineHeight:1.7}}>اینترنتت رو بررسی کن و دوباره تلاش کن</div>
+    <button onClick={onRetry} style={{marginTop:8,padding:'12px 28px',borderRadius:'var(--r-lg)',background:'linear-gradient(135deg,var(--accent),var(--accent-2))',color:'#fff',fontWeight:600,fontFamily:'var(--font)',fontSize:'0.95rem'}}>تلاش مجدد</button>
+  </div>
+)
+
 export default function App() {
   const [state, setState] = useState({
     status: 'loading',
@@ -93,9 +102,16 @@ export default function App() {
       }
     } catch(e) {
       console.error('loadPlans error:', e)
-      setState(s => ({...s, status:'noplan', user:session.user}))
+      // خطای شبکه نباید کاربر رو اشتباهی به صفحه‌ی «پلن نداری» ببره
+      setState(s => ({...s, status:'error', user:session.user}))
     }
   }, [])
+
+  const retryLoad = useCallback(async () => {
+    setState(s => ({...s, status:'loading'}))
+    const { data: { session } } = await supabase.auth.getSession()
+    await loadPlans(session)
+  }, [loadPlans])
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -190,18 +206,17 @@ export default function App() {
       setState(s => ({...s, status:'ready', allPlans:[...s.allPlans,newPlan], plan:newPlan, members, cards}))
     },
     joinPlan: async (inviteCode, displayName) => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('لطفاً دوباره وارد شوید')
-      const { data: targetPlan } = await supabase.from('plans').select()
-        .eq('invite_code', inviteCode.toUpperCase().trim()).maybeSingle()
-      if (!targetPlan) throw new Error('کد دعوت اشتباه است')
-      const { data: existing } = await supabase.from('plan_members').select('id')
-        .eq('plan_id', targetPlan.id).eq('user_id', session.user.id).maybeSingle()
-      if (!existing) {
-        const { error } = await supabase.from('plan_members')
-          .insert({plan_id:targetPlan.id, user_id:session.user.id, display_name:displayName})
-        if (error) throw error
+      // پیوستن از طریق RPCِ امن (بدون امکانِ خواندنِ پلن‌های دیگران)
+      const { data: targetPlan, error } = await supabase.rpc('join_plan', {
+        p_invite: inviteCode, p_display: displayName,
+      })
+      if (error) {
+        const m = (error.message || '').toLowerCase()
+        if (m.includes('invalid invite')) throw new Error('کد دعوت اشتباه است')
+        if (m.includes('not authenticated')) throw new Error('لطفاً دوباره وارد شوید')
+        throw error
       }
+      if (!targetPlan) throw new Error('کد دعوت اشتباه است')
       const [members, cards] = await Promise.all([loadMembers(targetPlan.id), loadCards(targetPlan.id)])
       setState(s => ({...s, status:'ready',
         allPlans:[...s.allPlans.filter(p=>p.id!==targetPlan.id), targetPlan],
@@ -265,6 +280,7 @@ export default function App() {
   const { status, user, allPlans, plan, members, cards, today } = state
 
   if (status === 'loading')   return <Spinner/>
+  if (status === 'error')     return <LoadError onRetry={retryLoad}/>
   if (status === 'loggedout') {
     if (!onboarded) {
       return <Onboarding onStart={() => {
