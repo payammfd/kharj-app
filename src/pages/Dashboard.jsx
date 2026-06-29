@@ -4,7 +4,15 @@ import BankCard from '../components/BankCard'
 import MemberAvatar from '../components/MemberAvatar'
 import AddTransactionSheet from '../components/AddTransactionSheet'
 import AddCardSheet from '../components/AddCardSheet'
+import { BellIcon, SearchIcon, SortIcon, HomeIcon } from '../lib/icons'
 import s from './Dashboard.module.css'
+
+const SORTS = [
+  { id: 'date-desc',   label: 'جدیدترین' },
+  { id: 'date-asc',    label: 'قدیمی‌ترین' },
+  { id: 'amount-desc', label: 'گران‌ترین' },
+  { id: 'amount-asc',  label: 'ارزان‌ترین' },
+]
 
 const CAT_COLORS = {
   'اینترنت':{'bg':'rgba(123,110,255,0.15)','c':'#A89DFF'},
@@ -19,7 +27,7 @@ const CAT_COLORS = {
   'درآمد':{'bg':'rgba(52,211,154,0.15)','c':'#34D39A'},
 }
 
-export default function Dashboard({ user, plan, members, cards, today, actions, onNavigate, onOpenStory, onOpenSearch, txRefresh }) {
+export default function Dashboard({ user, plan, members, cards, today, actions, onNavigate, onOpenSearch, onOpenNotif, txRefresh }) {
   const [vm, setVm] = useState({ jy: today[0], jm: today[1] })
   const [txs, setTxs] = useState([])
   const [loading, setLoading] = useState(true)
@@ -27,6 +35,27 @@ export default function Dashboard({ user, plan, members, cards, today, actions, 
   const [showAddTx, setShowAddTx] = useState(false)
   const [showAddCard, setShowAddCard] = useState(false)
   const [editTx, setEditTx] = useState(null)
+  const [sortBy, setSortBy] = useState('date-desc')
+  const [sortOpen, setSortOpen] = useState(false)
+  const [hasNotif, setHasNotif] = useState(false)
+
+  // وجودِ تراکنشِ جدیدِ دیده‌نشده برای نقطه‌ی روی زنگ
+  useEffect(() => {
+    if (!plan) return
+    supabase.from('transactions').select('created_at').eq('plan_id', plan.id)
+      .order('created_at', { ascending: false }).limit(1)
+      .then(({ data }) => {
+        const latest = data?.[0]?.created_at
+        const seen = localStorage.getItem('kharj-notif-seen')
+        setHasNotif(!!latest && (!seen || latest > seen))
+      })
+  }, [plan, txRefresh])
+
+  function openNotif() {
+    localStorage.setItem('kharj-notif-seen', new Date().toISOString())
+    setHasNotif(false)
+    onOpenNotif()
+  }
 
   const loadTxs = useCallback(async () => {
     if (!plan) return
@@ -43,6 +72,14 @@ export default function Dashboard({ user, plan, members, cards, today, actions, 
   const income = txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0)
   const expense = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0)
   const balance = income - expense
+
+  const sortedTxs = [...txs].sort((a,b)=>{
+    if(sortBy==='date-asc')    return a.jd-b.jd || (a.created_at>b.created_at?1:-1)
+    if(sortBy==='amount-desc') return b.amount-a.amount
+    if(sortBy==='amount-asc')  return a.amount-b.amount
+    return b.jd-a.jd || (a.created_at<b.created_at?1:-1) // date-desc
+  })
+  const sortLabel = SORTS.find(o=>o.id===sortBy)?.label
 
   const MIN_JY=1405, MIN_JM=1
   const isMin = vm.jy===MIN_JY && vm.jm===MIN_JM
@@ -64,26 +101,25 @@ export default function Dashboard({ user, plan, members, cards, today, actions, 
     <div className={s.page}>
       <div className={s.glow1}/><div className={s.glow2}/>
       <header className={s.hdr}>
-        <button className={s.planBtn} onClick={()=>onNavigate('plan')}>
-          <div className={s.planAvatar}>
-            {plan?.avatar_url?<img src={plan.avatar_url} alt="" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:'14px'}}/>:<span style={{fontSize:'18px'}}>🏠</span>}
-          </div>
-          <div>
-            <div className={s.planName}>{plan?.name}</div>
-            <div className={s.planSub}>{members.length} عضو</div>
-          </div>
-        </button>
-        <div className={s.headerRight}>
-          <button className={s.searchBtn} onClick={onOpenSearch} aria-label="جستجو">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4" strokeLinecap="round"/></svg>
+        <div className={s.hdrSide}>
+          <button className={s.meAvatar} onClick={()=>onNavigate('profile')} aria-label="پروفایل">
+            <MemberAvatar member={myMember} size={38}/>
           </button>
-          <div className={s.membersAvatars}>
-            {members.slice(0,3).map((m,i)=>(
-              <div key={m.user_id} style={{marginRight:i>0?'-8px':0,zIndex:members.length-i}}>
-                <MemberAvatar member={m} size={32}/>
-              </div>
-            ))}
-          </div>
+          <button className={s.iconBtn} onClick={openNotif} aria-label="اعلان‌ها">
+            <BellIcon size={22}/>
+            {hasNotif && <span className={s.notifDot}/>}
+          </button>
+        </div>
+
+        <button className={s.planCenter} onClick={()=>onNavigate('plan')}>
+          <div className={s.planName}>{plan?.name}</div>
+          <div className={s.planSub}>{toFa(members.length)} عضو</div>
+        </button>
+
+        <div className={`${s.hdrSide} ${s.hdrSideEnd}`}>
+          <button className={s.iconBtn} onClick={onOpenSearch} aria-label="جستجو">
+            <SearchIcon size={22}/>
+          </button>
         </div>
       </header>
 
@@ -102,15 +138,6 @@ export default function Dashboard({ user, plan, members, cards, today, actions, 
           </div>
         </div>
       </div>
-
-      <button className={s.storyBanner} onClick={()=>onOpenStory(vm.jy, vm.jm)}>
-        <span className={s.storyEmoji}>📖</span>
-        <span className={s.storyText}>
-          <span className={s.storyTitle}>داستان مالی {MONTHS[vm.jm-1]}</span>
-          <span className={s.storySub}>ماهت رو مثل یه قصه ببین</span>
-        </span>
-        <span className={s.storyChevron}>‹</span>
-      </button>
 
       <div className={s.cardsSec}>
         <div className={s.secHeader}>
@@ -161,13 +188,36 @@ export default function Dashboard({ user, plan, members, cards, today, actions, 
 
       <div className={s.txHdr}>
         <span className={s.txTitle}>تراکنش‌ها</span>
-        {txs.length>0&&<button className={s.txStats} onClick={()=>onNavigate('stats')}>آمار ←</button>}
+        {txs.length>0&&(
+          <div className={s.txActionsHdr}>
+            <div className={s.sortWrap}>
+              <button className={s.sortBtn} onClick={()=>setSortOpen(o=>!o)}>
+                <SortIcon size={16}/><span>{sortLabel}</span>
+              </button>
+              {sortOpen&&(
+                <>
+                  <div className={s.sortBackdrop} onClick={()=>setSortOpen(false)}/>
+                  <div className={s.sortMenu}>
+                    {SORTS.map(o=>(
+                      <button key={o.id}
+                        className={`${s.sortOpt} ${sortBy===o.id?s.sortOptActive:''}`}
+                        onClick={()=>{setSortBy(o.id);setSortOpen(false)}}>
+                        {o.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+            <button className={s.txStats} onClick={()=>onNavigate('stats')}>آمار ←</button>
+          </div>
+        )}
       </div>
 
       <div className={s.txList}>
         {loading?(<div className={s.empty}><div className={s.emptyIcon}>⋯</div></div>)
         :txs.length===0?(<div className={s.empty}><div className={s.emptyIcon}>○</div><p>هنوز تراکنشی ثبت نشده</p></div>)
-        :txs.map(t=>{
+        :sortedTxs.map(t=>{
           const col=CAT_COLORS[t.type==='income'?'درآمد':t.category]||CAT_COLORS['سایر']
           const member=getMember(t.user_id)
           return(

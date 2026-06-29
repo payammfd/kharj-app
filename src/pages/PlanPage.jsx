@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import MemberAvatar from '../components/MemberAvatar'
+import { HomeIcon } from '../lib/icons'
 import s from './PlanPage.module.css'
 
 export default function PlanPage({ user, plan, members, actions }) {
@@ -36,7 +37,7 @@ export default function PlanPage({ user, plan, members, actions }) {
       <header className={s.hdr}><h1 className={s.title}>پلن</h1></header>
       <div className={s.avatarSec}>
         <div className={s.avatarWrap} onClick={()=>fileRef.current?.click()}>
-          {avatarUrl?<img src={avatarUrl} alt="" className={s.avatarImg}/>:<span style={{fontSize:'40px'}}>🏠</span>}
+          {avatarUrl?<img src={avatarUrl} alt="" className={s.avatarImg}/>:<HomeIcon size={40} color="rgba(255,255,255,0.5)"/>}
           <div className={s.avatarOverlay}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
         </div>
         <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleAvatar}/>

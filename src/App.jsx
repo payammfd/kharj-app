@@ -13,6 +13,7 @@ import BottomNav from './components/BottomNav'
 import AddTransactionSheet from './components/AddTransactionSheet'
 import FinancialStory from './components/FinancialStory'
 import SearchTransactions from './components/SearchTransactions'
+import Notifications from './components/Notifications'
 import { isNativeApp, setupNativeTabBar, setNativeActiveTab, setNativeTabBarHidden } from './native/nativeTabBar'
 
 // پل بین نوار شیشه‌ایِ نیتیو (Swift) و state ری‌اکت. روی iOS رندر می‌شه و خروجی DOM نداره.
@@ -49,9 +50,12 @@ export default function App() {
   const [txRefresh, setTxRefresh] = useState(0)
   const [story, setStory] = useState(null) // {jy,jm} داستان مالی، یا null
   const [showSearch, setShowSearch] = useState(false)
+  const [showNotif, setShowNotif] = useState(false)
   const openAdd = useCallback(() => setShowAddTx(true), [])
+  // زیرساختِ داستان مالی برای آینده (آخر هر ماه) — فعلاً نقطه‌ی ورودی ندارد
   const openStory = useCallback((jy, jm) => setStory({ jy, jm }), [])
   const openSearch = useCallback(() => setShowSearch(true), [])
+  const openNotif = useCallback(() => setShowNotif(true), [])
 
   async function loadMembers(planId) {
     const { data } = await supabase
@@ -275,13 +279,13 @@ export default function App() {
 
   return (
     <>
-      {tab==='home'    && <Dashboard user={user} plan={plan} members={members} cards={cards} today={today} actions={actions} onNavigate={setTab} onOpenStory={openStory} onOpenSearch={openSearch} txRefresh={txRefresh}/>}
+      {tab==='home'    && <Dashboard user={user} plan={plan} members={members} cards={cards} today={today} actions={actions} onNavigate={setTab} onOpenSearch={openSearch} onOpenNotif={openNotif} txRefresh={txRefresh}/>}
       {tab==='cards'   && <Cards plan={plan} cards={cards} actions={actions}/>}
       {tab==='stats'   && <Stats plan={plan} onOpenStory={openStory}/>}
       {tab==='plan'    && <PlanPage user={user} plan={plan} members={members} actions={actions}/>}
       {tab==='profile' && <ProfilePage user={user} plan={plan} members={members} actions={actions}/>}
       {isNativeApp
-        ? <NativeTabBarBridge active={tab} hidden={showAddTx || !!story || showSearch} onTab={setTab} onAdd={openAdd}/>
+        ? <NativeTabBarBridge active={tab} hidden={showAddTx || !!story || showSearch || showNotif} onTab={setTab} onAdd={openAdd}/>
         : <BottomNav active={tab} onNavigate={setTab} onAddTx={openAdd}/>}
       {showAddTx && (
         <AddTransactionSheet plan={plan} user={user} today={today} cards={cards}
@@ -292,6 +296,9 @@ export default function App() {
       )}
       {showSearch && (
         <SearchTransactions plan={plan} members={members} onClose={()=>setShowSearch(false)}/>
+      )}
+      {showNotif && (
+        <Notifications plan={plan} members={members} onClose={()=>setShowNotif(false)}/>
       )}
     </>
   )

@@ -5,7 +5,7 @@
 .typeBtn.expense { background:var(--red-soft);color:var(--red);border-color:rgba(255,107,107,0.3); }
 .typeBtn.income { background:var(--green-soft);color:var(--green);border-color:rgba(52,211,154,0.3); }
 .catGrid { display:flex;flex-wrap:wrap;gap:8px; }
-.catBtn { padding:7px 12px;border-radius:20px;font-size:0.8rem;font-family:var(--font);background:var(--bg-el);color:var(--text-2);border:1px solid var(--border);transition:all 0.15s; }
+.catBtn { display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:20px;font-size:0.8rem;font-family:var(--font);background:var(--bg-el);color:var(--text-2);border:1px solid var(--border);transition:all 0.15s; }
 .catBtn:hover { color:var(--text);border-color:var(--border-md); }
 .catActive { background:var(--accent-soft);color:var(--accent);border-color:var(--accent)!important; }
 .dateRow { display:flex;gap:8px; }

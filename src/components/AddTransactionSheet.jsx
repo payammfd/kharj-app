@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { supabase, MONTHS, toFa, jalaliMonthDays, BANKS } from '../lib/supabase'
 import BottomSheet from './BottomSheet'
+import { CategoryIcon } from '../lib/icons'
 import styles from './Forms.module.css'
 
 const CATS = ['خوراک','حمل و نقل','آب، برق، گاز','اینترنت','سلامت','پوشاک','تفریح','آموزش','سایر']
-const CAT_ICONS = {'خوراک':'🛒','حمل و نقل':'🚗','آب، برق، گاز':'💡','اینترنت':'📶','سلامت':'💊','پوشاک':'👕','تفریح':'🎮','آموزش':'📚','سایر':'📌'}
 
 export default function AddTransactionSheet({ plan, user, today, cards, editTx, onClose, onAdded }) {
   const isEdit = !!editTx
@@ -71,7 +71,7 @@ export default function AddTransactionSheet({ plan, user, today, cards, editTx, 
                 <button key={c} type="button"
                   className={`${styles.catBtn} ${cat===c?styles.catActive:''}`}
                   onClick={()=>setCat(c)}>
-                  {CAT_ICONS[c]} {c}
+                  <CategoryIcon cat={c} size={16} /> {c}
                 </button>
               ))}
             </div>

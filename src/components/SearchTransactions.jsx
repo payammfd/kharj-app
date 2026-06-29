@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase, MONTHS, toFa, fmtAmount } from '../lib/supabase'
 import MemberAvatar from './MemberAvatar'
+import { SearchIcon } from '../lib/icons'
 import s from './SearchTransactions.module.css'
 
 const CAT_COLORS = {
@@ -72,7 +73,7 @@ export default function SearchTransactions({ plan, members, onClose }) {
       <div className={s.list}>
         {!q.trim() ? (
           <div className={s.empty}>
-            <div className={s.emptyIcon}>🔍</div>
+            <div className={s.emptyIcon}><SearchIcon size={38} color="rgba(255,255,255,0.4)" /></div>
             <p>اسم خرج یا دسته‌بندی رو بنویس</p>
             <span>مثلاً «رستوران»، «خوراک» یا «اینترنت»</span>
           </div>
