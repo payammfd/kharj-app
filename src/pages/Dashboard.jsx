@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase, MONTHS, toFa, fmtAmount } from '../lib/supabase'
 import BankCard from '../components/BankCard'
 import MemberAvatar from '../components/MemberAvatar'
@@ -38,6 +38,33 @@ export default function Dashboard({ user, plan, members, cards, today, actions, 
   const [sortBy, setSortBy] = useState('date-desc')
   const [sortOpen, setSortOpen] = useState(false)
   const [hasNotif, setHasNotif] = useState(false)
+  const sliderRef = useRef(null)
+  const scrollRaf = useRef(0)
+
+  // با اسکرول/سوایپ، کارتِ وسط رو پیدا کن تا نقطه‌ی فعال هماهنگ بمونه
+  const onCardScroll = useCallback(() => {
+    cancelAnimationFrame(scrollRaf.current)
+    scrollRaf.current = requestAnimationFrame(() => {
+      const el = sliderRef.current
+      if (!el) return
+      const center = el.scrollLeft + el.clientWidth / 2
+      let best = 0, bestDist = Infinity
+      for (let i = 0; i < el.children.length; i++) {
+        const c = el.children[i]
+        const cc = c.offsetLeft + c.offsetWidth / 2
+        const d = Math.abs(cc - center)
+        if (d < bestDist) { bestDist = d; best = i }
+      }
+      setActiveCard(best)
+    })
+  }, [])
+
+  function scrollToCard(i) {
+    const el = sliderRef.current
+    const c = el?.children[i]
+    if (!el || !c) return
+    el.scrollTo({ left: c.offsetLeft - (el.clientWidth - c.offsetWidth) / 2, behavior: 'smooth' })
+  }
 
   // وجودِ تراکنشِ جدیدِ دیده‌نشده برای نقطه‌ی روی زنگ
   useEffect(() => {
@@ -150,17 +177,17 @@ export default function Dashboard({ user, plan, members, cards, today, actions, 
           </button>
         ):(
           <>
-            <div className={s.cardSlider}>
+            <div className={s.cardSlider} ref={sliderRef} onScroll={onCardScroll}>
               {cards.map((c,i)=>(
-                <div key={c.id} style={{display:i===activeCard?'block':'none'}}>
-                  <BankCard card={c} active/>
+                <div key={c.id} className={s.cardSlide}>
+                  <BankCard card={c} active={i===activeCard}/>
                 </div>
               ))}
             </div>
             {cards.length>1&&(
               <div className={s.dots}>
                 {cards.map((_,i)=>(
-                  <div key={i} className={`${s.dot} ${i===activeCard?s.dotOn:''}`} onClick={()=>setActiveCard(i)}/>
+                  <button key={i} className={`${s.dot} ${i===activeCard?s.dotOn:''}`} onClick={()=>scrollToCard(i)} aria-label={`کارت ${i+1}`}/>
                 ))}
               </div>
             )}

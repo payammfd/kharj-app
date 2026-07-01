@@ -3,6 +3,11 @@ import { createClient } from '@supabase/supabase-js'
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 
+// قفلِ no-op: supabase-js به‌صورت پیش‌فرض از Web Locks API (navigator.locks) استفاده می‌کنه،
+// که توی PWAِ standaloneِ iOS و بعضی WebViewها deadlock می‌شه و باعث می‌شه INITIAL_SESSION
+// هیچ‌وقت نیاد → اپ روی اسپینرِ لودینگ گیر می‌کنه. چون اپ تک‌کاربره‌ست، بی‌قفل اجراش می‌کنیم.
+const noopLock = async (_name, _acquireTimeout, fn) => fn()
+
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     persistSession: true,
@@ -10,6 +15,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     autoRefreshToken: true,
     storageKey: 'kharj-auth',
     flowType: 'pkce',  // ← PKCE instead of implicit
+    lock: noopLock,
   }
 })
 

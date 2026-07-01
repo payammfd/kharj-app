@@ -8,6 +8,7 @@
 .avatarOverlay{position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s}
 .avatarWrap:hover .avatarOverlay{opacity:1}
 .avatarHint{font-size:11px;color:var(--text-3)}
+.avatarErr{font-size:11px;color:var(--red);margin-top:4px}
 .fields{padding:0 20px;display:flex;flex-direction:column;gap:12px;position:relative;z-index:2}
 .field{display:flex;flex-direction:column;gap:6px}
 .lbl{font-size:0.8rem;color:var(--text-2);font-weight:500}

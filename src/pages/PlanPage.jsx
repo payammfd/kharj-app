@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import MemberAvatar from '../components/MemberAvatar'
+import ImageCropper from '../components/ImageCropper'
 import { HomeIcon } from '../lib/icons'
 import s from './PlanPage.module.css'
 
@@ -10,6 +11,8 @@ export default function PlanPage({ user, plan, members, actions }) {
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [cropFile, setCropFile] = useState(null)
+  const [avatarErr, setAvatarErr] = useState('')
   const fileRef = useRef()
 
   async function handleSave(){
@@ -18,15 +21,29 @@ export default function PlanPage({ user, plan, members, actions }) {
     catch(e){console.error(e)} finally{setLoading(false)}
   }
 
-  async function handleAvatar(e){
-    const file=e.target.files?.[0];if(!file)return
-    setLoading(true)
+  function pickAvatar(e){
+    const file=e.target.files?.[0]
+    e.target.value=''            // تا انتخابِ دوباره‌ی همون عکس هم رویداد بده
+    if(file) { setAvatarErr(''); setCropFile(file) }
+  }
+
+  // مسیر باید زیرِ avatars/{uid} باشه تا با سیاستِ RLSِ استوریج بخونه
+  async function uploadCropped(blob){
+    setLoading(true); setAvatarErr('')
     try {
-      const ext=file.name.split('.').pop(),path=`plans/${plan.id}.${ext}`
-      await supabase.storage.from('avatars').upload(path,file,{upsert:true})
+      const path=`avatars/${user.id}/plan-${plan.id}.jpg`
+      const { error:upErr }=await supabase.storage.from('avatars')
+        .upload(path,blob,{upsert:true,contentType:'image/jpeg'})
+      if(upErr) throw upErr
       const {data}=supabase.storage.from('avatars').getPublicUrl(path)
-      setAvatarUrl(data.publicUrl+'?t='+Date.now())
-    }catch(e){console.error(e)}finally{setLoading(false)}
+      const url=data.publicUrl+'?t='+Date.now()
+      setAvatarUrl(url)
+      await actions.updatePlan({ avatar_url:url })   // فوری ذخیره شه
+      setCropFile(null)
+    }catch(e){
+      console.error(e)
+      setAvatarErr('آپلود عکس ناموفق بود، دوباره تلاش کن')
+    }finally{setLoading(false)}
   }
 
   function copyCode(){navigator.clipboard.writeText(plan?.invite_code||'');setCopied(true);setTimeout(()=>setCopied(false),2000)}
@@ -40,8 +57,9 @@ export default function PlanPage({ user, plan, members, actions }) {
           {avatarUrl?<img src={avatarUrl} alt="" className={s.avatarImg}/>:<HomeIcon size={40} color="rgba(255,255,255,0.5)"/>}
           <div className={s.avatarOverlay}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
         </div>
-        <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleAvatar}/>
+        <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={pickAvatar}/>
         <p className={s.avatarHint}>برای تغییر عکس کلیک کن</p>
+        {avatarErr&&<p className={s.avatarErr}>{avatarErr}</p>}
       </div>
       <div className={s.fields}>
         <div className={s.field}><label className={s.lbl}>اسم پلن</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="اسم پلن"/></div>
@@ -68,6 +86,7 @@ export default function PlanPage({ user, plan, members, actions }) {
         </div>
       </div>
       <button className={s.signOutBtn} onClick={actions.signOut}>خروج از حساب</button>
+      {cropFile&&<ImageCropper file={cropFile} onCancel={()=>setCropFile(null)} onConfirm={uploadCropped}/>}
     </div>
   )
 }

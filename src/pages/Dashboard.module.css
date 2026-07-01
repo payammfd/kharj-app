@@ -52,10 +52,29 @@
 .secTitle { font-size:13px;font-weight:600;color:var(--text-2); }
 .secAction { font-size:12px;color:var(--accent);background:none;border:none;padding:0; }
 .emptyCard { width:100%;padding:24px;border-radius:20px;border:1.5px dashed rgba(123,110,255,0.3);background:rgba(123,110,255,0.05);color:var(--text-2);display:flex;flex-direction:column;align-items:center;gap:8px;font-size:14px;font-family:var(--font);cursor:pointer; }
-.cardSlider { position:relative; }
-.cardSlide { width:100%; }
+/* اسلایدر افقی با اسنپ — کارتِ کناری حدود ۱۰٪ پیداست تا کاربر بفهمه می‌تونه سوایپ کنه */
+.cardSlider {
+  position:relative;
+  display:flex;
+  gap:12px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+  direction:ltr;               /* محاسبه‌ی اسکرول ساده و سازگار */
+  margin:0 -20px;              /* بیرون‌زدن از پدینگِ بخش تا لبه‌به‌لبه بشه */
+  padding:4px 20px;
+  scroll-padding:0 20px;
+  scrollbar-width:none;
+}
+.cardSlider::-webkit-scrollbar { display:none; }
+.cardSlide {
+  flex:0 0 calc(100% - 48px);  /* فضای دو طرف برای دیدنِ کارتِ کناری */
+  scroll-snap-align:center;
+  scroll-snap-stop:always;
+}
 .dots { display:flex;justify-content:center;gap:5px;margin-top:10px; }
-.dot { width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.15);cursor:pointer;transition:all 0.2s; }
+.dot { width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;padding:0;cursor:pointer;transition:all 0.2s; }
 .dotOn { background:var(--accent);width:16px; }
 
 .monthNav { display:flex;align-items:center;justify-content:space-between;padding:4px 20px 12px;position:relative;z-index:2; }
@@ -70,7 +89,8 @@
 .sumLbl { font-size:10px;color:var(--text-3);margin-bottom:5px; }
 .sumVal { font-size:12px;font-weight:700;line-height:1.4; }
 
-.txHdr { display:flex;justify-content:space-between;align-items:center;padding:0 20px 10px;position:relative;z-index:2; }
+/* z-index بالاتر از لیست تراکنش‌ها تا منوی مرتب‌سازی روی ردیف‌ها بیفته و قابل کلیک باشه */
+.txHdr { display:flex;justify-content:space-between;align-items:center;padding:0 20px 10px;position:relative;z-index:30; }
 .txTitle { font-size:14px;font-weight:600; }
 .txStats { font-size:11px;color:var(--accent);background:none;border:none;padding:0; }
 .txActionsHdr { display:flex; align-items:center; gap:14px; }

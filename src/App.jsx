@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase, todayJalali } from './lib/supabase'
 import Login from './pages/Login'
 import Onboarding from './pages/Onboarding'
@@ -132,6 +132,27 @@ export default function App() {
       }
     )
     return () => subscription.unsubscribe()
+  }, [loadPlans])
+
+  // watchdog: اگه بعد از چند ثانیه هنوز روی لودینگ موندیم (مثلاً INITIAL_SESSION نیومد
+  // یا SWِ کهنه چیزی رو بلاک کرد)، دستی session رو می‌گیریم تا اپ روی اسپینر گیر نکنه.
+  const statusRef = useRef(state.status)
+  statusRef.current = state.status
+  useEffect(() => {
+    const t = setTimeout(async () => {
+      if (statusRef.current !== 'loading') return
+      try {
+        const session = await Promise.race([
+          supabase.auth.getSession().then(r => r.data.session),
+          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000)),
+        ])
+        await loadPlans(session)
+      } catch {
+        // حتی اگه گرفتن session هم گیر کرد، حداقل کاربر صفحه‌ی ورود رو ببینه
+        setState(s => s.status === 'loading' ? {...s, status:'loggedout'} : s)
+      }
+    }, 7000)
+    return () => clearTimeout(t)
   }, [loadPlans])
 
   const actions = {

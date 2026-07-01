@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import MemberAvatar from '../components/MemberAvatar'
+import ImageCropper from '../components/ImageCropper'
 import s from './ProfilePage.module.css'
 
 export default function ProfilePage({ user, plan, members, actions }) {
@@ -15,6 +16,8 @@ export default function ProfilePage({ user, plan, members, actions }) {
   const [pwLoading, setPwLoading] = useState(false)
   const [pwMsg, setPwMsg] = useState('')
   const [pwErr, setPwErr] = useState('')
+  const [cropFile, setCropFile] = useState(null)
+  const [avatarErr, setAvatarErr] = useState('')
 
   async function handleSave(){
     setLoading(true)
@@ -40,15 +43,27 @@ export default function ProfilePage({ user, plan, members, actions }) {
     }finally{setPwLoading(false)}
   }
 
-  async function handleAvatar(e){
-    const file=e.target.files?.[0];if(!file)return
-    setLoading(true)
+  function pickAvatar(e){
+    const file=e.target.files?.[0]
+    e.target.value=''
+    if(file){ setAvatarErr(''); setCropFile(file) }
+  }
+
+  async function uploadCropped(blob){
+    setLoading(true); setAvatarErr('')
     try {
-      const ext=file.name.split('.').pop(),path=`avatars/${user.id}.${ext}`
-      await supabase.storage.from('avatars').upload(path,file,{upsert:true})
+      const path=`avatars/${user.id}.jpg`
+      const { error:upErr }=await supabase.storage.from('avatars')
+        .upload(path,blob,{upsert:true,contentType:'image/jpeg'})
+      if(upErr) throw upErr
       const {data}=supabase.storage.from('avatars').getPublicUrl(path)
       await supabase.auth.updateUser({data:{avatar_url:data.publicUrl+'?t='+Date.now()}})
-    }catch(e){console.error(e)}finally{setLoading(false)}
+      await actions.reloadMembers?.()   // تا عکس بلافاصله تو UI به‌روز شه
+      setCropFile(null)
+    }catch(e){
+      console.error(e)
+      setAvatarErr('آپلود عکس ناموفق بود، دوباره تلاش کن')
+    }finally{setLoading(false)}
   }
 
   return (
@@ -60,8 +75,9 @@ export default function ProfilePage({ user, plan, members, actions }) {
           <MemberAvatar member={myMember} size={90}/>
           <div className={s.avatarOverlay}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
         </div>
-        <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleAvatar}/>
+        <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={pickAvatar}/>
         <p className={s.avatarHint}>برای تغییر عکس کلیک کن</p>
+        {avatarErr&&<p className={s.avatarErr}>{avatarErr}</p>}
       </div>
       <div className={s.fields}>
         <div className={s.field}><label className={s.lbl}>اسم نمایشی</label><input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="اسمت"/></div>
@@ -81,6 +97,7 @@ export default function ProfilePage({ user, plan, members, actions }) {
       </div>
 
       <button className={s.signOutBtn} onClick={actions.signOut}>خروج از حساب</button>
+      {cropFile&&<ImageCropper file={cropFile} onCancel={()=>setCropFile(null)} onConfirm={uploadCropped}/>}
     </div>
   )
 }

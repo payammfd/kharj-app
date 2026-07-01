@@ -1,0 +1,59 @@
+.overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.72);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; padding-bottom: calc(20px + var(--safe-b));
+}
+.sheet {
+  width: 100%; max-width: 380px;
+  background: var(--bg-el);
+  border: 1px solid var(--border-md);
+  border-radius: 22px;
+  padding: 14px 16px 18px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+}
+.head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.title { font-size: 14px; font-weight: 600; color: var(--text); }
+.cancel { background: none; border: none; color: var(--text-3); font-family: var(--font); font-size: 14px; padding: 4px; }
+.done { background: none; border: none; color: var(--accent); font-family: var(--font); font-size: 15px; font-weight: 700; padding: 4px; }
+.done:disabled, .cancel:disabled { opacity: 0.5; }
+
+.viewport {
+  position: relative;
+  width: min(78vw, 320px);
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #000;
+  touch-action: none;       /* اسکرولِ صفحه موقع درگ غیرفعال بشه */
+  cursor: grab;
+  user-select: none;
+}
+.viewport:active { cursor: grabbing; }
+.cropImg { position: absolute; max-width: none; pointer-events: none; }
+/* قابِ راهنما با سایه‌ی بیرونی برای مشخص‌شدنِ ناحیه‌ی برش */
+.frame {
+  position: absolute; inset: 0; pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.28) inset;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 16px;
+}
+
+.zoomRow { display: flex; align-items: center; gap: 12px; margin-top: 18px; padding: 0 4px; }
+.zoomIcon { color: var(--text-3); font-size: 18px; width: 14px; text-align: center; }
+.zoom {
+  flex: 1; padding: 0; background: none; border: none;
+  -webkit-appearance: none; appearance: none; height: 4px; border-radius: 4px;
+  background: rgba(255,255,255,0.15);
+}
+.zoom::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--accent); border: 2px solid #fff; cursor: pointer;
+}
+.zoom::-moz-range-thumb {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--accent); border: 2px solid #fff; cursor: pointer;
+}
+.hint { text-align: center; color: var(--text-3); font-size: 11px; margin-top: 12px; }
